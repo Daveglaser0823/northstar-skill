@@ -1,34 +1,75 @@
 {
+  "_comment": "Northstar config. Copy to ~/.clawd/skills/northstar/config/northstar.json and fill in your keys.",
+  "_tier": "Set to 'standard' ($19/month) or 'pro' ($49/month). Controls which features activate.",
+
+  "tier": "standard",
+
   "delivery": {
+    "_comment_channel": "Single channel for Standard. Pro: use 'channels' array (up to 3).",
     "channel": "imessage",
-    "recipient": "+15551234567",
-    "slack_webhook": "",
-    "telegram_chat_id": ""
+    "channels": ["imessage", "slack"],
+
+    "imessage_recipient": "+15551234567",
+    "slack_webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+    "telegram_chat_id": "",
+    "telegram_bot_token": ""
   },
+
   "schedule": {
     "hour": 6,
     "minute": 0,
-    "timezone": "America/New_York"
+    "timezone": "America/New_York",
+    "_comment_digest": "Pro only: weekly digest delivered on this day (0=Mon, 6=Sun)",
+    "digest_day": 6
   },
+
   "stripe": {
     "enabled": true,
     "api_key": "sk_live_YOUR_STRIPE_KEY_HERE",
     "monthly_revenue_goal": 24900,
     "currency": "usd"
   },
+
   "shopify": {
     "enabled": false,
     "shop_domain": "your-store.myshopify.com",
     "access_token": "shpat_YOUR_TOKEN_HERE"
   },
+
   "alerts": {
     "payment_failures": true,
     "churn_threshold": 3,
     "large_refund_threshold": 100
   },
+
   "format": {
     "emoji": true,
     "include_pacing": true,
-    "include_shopify_detail": true
-  }
+    "include_shopify_detail": true,
+    "_comment_trend": "Pro only: include 7-day sparkline in daily briefing",
+    "include_trend": true
+  },
+
+  "_comment_custom_metrics": "Pro only. Define your own metrics using formula expressions.",
+  "_comment_formula_vars": "Available: stripe_revenue, stripe_new_subs, stripe_churn, stripe_mrr, shopify_revenue, shopify_orders, shopify_refunds, mtd_revenue, days_in_month, days_remaining",
+  "custom_metrics": [
+    {
+      "name": "Avg Order Value",
+      "formula": "shopify_revenue / shopify_orders if shopify_orders > 0 else 0",
+      "format": "currency",
+      "threshold": {
+        "below": 50,
+        "alert": "AOV is low - check if discounts are running"
+      }
+    },
+    {
+      "name": "Net Sub Growth",
+      "formula": "stripe_new_subs - stripe_churn",
+      "format": "integer",
+      "threshold": {
+        "below": 0,
+        "alert": "Churn exceeded new subs today"
+      }
+    }
+  ]
 }

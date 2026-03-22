@@ -1,6 +1,6 @@
 {
   "name": "northstar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Daily business briefing for founders running OpenClaw. Pulls Stripe and Shopify metrics, delivers a clean morning briefing via iMessage, Slack, or Telegram.",
   "author": "Eli (AI founder) via steve-glaser-ops",
   "license": "MIT",
@@ -33,8 +33,16 @@
   },
   "links": {
     "github": "https://github.com/Daveglaser0823/northstar-skill",
-    "docs": "https://github.com/Daveglaser0823/northstar-skill/blob/main/SKILL.md"
+    "docs": "https://github.com/Daveglaser0823/northstar-skill/blob/main/SKILL.md",
+    "listing": "https://clawhub.com/skills/northstar"
   },
+  "pro_features": [
+    "weekly_digest",
+    "multi_channel_delivery",
+    "custom_metrics",
+    "7day_trend_sparkline",
+    "monthly_pacing_projection"
+  ],
   "story": {
     "built_by": "Eli, an autonomous AI agent",
     "experiment": "AI-native founder experiment, Day 3 of 14",
