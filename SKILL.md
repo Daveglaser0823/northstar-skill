@@ -1,0 +1,194 @@
+# Northstar - Daily Business Briefing
+
+Northstar delivers a clean daily business briefing to your preferred channel every morning. Connect your Stripe and/or Shopify accounts, configure your schedule, and wake up knowing.
+
+No more tab-hopping. Your agent does the work while you sleep.
+
+## What It Does
+
+Every morning at your configured time, Northstar:
+1. Pulls yesterday's revenue from Stripe (MRR, new subs, churn, payment failures)
+2. Pulls order data from Shopify (orders, refunds, top products)
+3. Calculates week-over-week and month-to-date metrics
+4. Flags anything that needs attention (unusual churn, payment retries, large refunds)
+5. Delivers a clean briefing via your preferred channel (iMessage, Slack, or Telegram)
+
+## Example Output
+
+```
+📊 Northstar Daily Briefing - March 22
+Revenue yesterday: $1,247 (+12% vs last week)
+Active subscribers: 342 (+3 new, -1 churn)
+Month-to-date: $18,430 (74% of $24,900 goal)
+
+Shopify: 23 orders fulfilled | 8 open | 1 refund ($47)
+
+⚠️ 2 payment retries pending - review in Stripe
+Next: 6 days left in month, on track.
+```
+
+## Quick Start
+
+### 1. Install the skill
+
+```bash
+clawhub install northstar
+```
+
+### 2. Configure your credentials
+
+Copy the config template and fill in your keys:
+
+```bash
+cp ~/.clawd/skills/northstar/config/northstar.json.example ~/.clawd/skills/northstar/config/northstar.json
+```
+
+Edit `northstar.json` with your API keys. See **Configuration** section below.
+
+### 3. Test it
+
+```bash
+northstar test
+```
+
+Runs a dry-run briefing and prints output to your terminal. No message is sent.
+
+### 4. Schedule it
+
+Add to your OpenClaw cron (edit via `openclaw cron edit`):
+
+```
+# Northstar daily briefing at 6:00 AM
+0 6 * * * northstar run
+```
+
+Or trigger manually anytime:
+
+```bash
+northstar run
+```
+
+## Configuration
+
+Config file: `~/.clawd/skills/northstar/config/northstar.json`
+
+```json
+{
+  "delivery": {
+    "channel": "imessage",
+    "recipient": "+15551234567"
+  },
+  "schedule": {
+    "hour": 6,
+    "timezone": "America/New_York"
+  },
+  "stripe": {
+    "enabled": true,
+    "api_key": "sk_live_YOUR_KEY_HERE",
+    "monthly_revenue_goal": 24900
+  },
+  "shopify": {
+    "enabled": false,
+    "shop_domain": "your-store.myshopify.com",
+    "access_token": "shpat_YOUR_TOKEN_HERE"
+  },
+  "alerts": {
+    "payment_failures": true,
+    "churn_threshold": 3,
+    "large_refund_threshold": 100
+  }
+}
+```
+
+### Delivery Channels
+
+| Channel | Config value | Recipient format |
+|---------|-------------|-----------------|
+| iMessage | `"imessage"` | Phone number: `"+15551234567"` |
+| Slack | `"slack"` | Webhook URL |
+| Telegram | `"telegram"` | Chat ID (numeric) |
+| Terminal only | `"none"` | n/a (dry-run mode) |
+
+### Stripe Setup
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+2. Create a **Restricted Key** with read-only access to:
+   - `charges` (read)
+   - `customers` (read)
+   - `subscriptions` (read)
+   - `invoices` (read)
+3. Paste the key into `stripe.api_key`
+
+Set `monthly_revenue_goal` to your MRR target (in cents or dollars - the script auto-detects).
+
+### Shopify Setup
+
+1. Go to your Shopify Admin > Apps > Develop apps
+2. Create a custom app with read access to:
+   - `read_orders`
+   - `read_products`
+3. Install the app and copy the Admin API access token
+4. Set `shopify.enabled: true`, add your shop domain and token
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `northstar run` | Run briefing now, send to configured channel |
+| `northstar test` | Dry-run - print briefing to terminal, no message sent |
+| `northstar status` | Show config status and last run info |
+| `northstar stripe` | Show Stripe data only (debug) |
+| `northstar shopify` | Show Shopify data only (debug) |
+
+## Metrics Calculated
+
+### Stripe Metrics
+- **Yesterday's revenue** - total charges, successful only
+- **Active subscribers** - current subscription count
+- **New subscribers** - started in last 24 hours
+- **Churned subscribers** - canceled in last 24 hours
+- **Net new MRR** - (new MRR) - (churned MRR)
+- **Month-to-date revenue** - vs. your goal
+- **Payment failures** - retries and failed charges
+
+### Shopify Metrics
+- **Orders fulfilled** - yesterday
+- **Open orders** - pending fulfillment
+- **Refunds** - count and total value yesterday
+- **Top product** - highest-selling SKU yesterday
+
+### Calculated
+- **Week-over-week revenue change** - yesterday vs. same day last week
+- **Month-to-date pacing** - % of monthly goal, days remaining, on-track status
+
+## Requirements
+
+- Python 3.9+
+- OpenClaw with cron support
+- `stripe` Python package (`pip install stripe`)
+- `requests` Python package (for Shopify, usually pre-installed)
+
+The install script handles dependencies automatically.
+
+## Pricing
+
+Available on [ClawHub](https://clawhub.com):
+
+| Tier | Price | Features |
+|------|-------|---------|
+| **Lite** | Free | Stripe only, terminal output, manual run |
+| **Standard** | $19/month | Stripe + Shopify, all delivery channels, scheduled runs |
+| **Pro** | $49/month | Multi-channel delivery, custom metrics, weekly digest |
+
+## Privacy
+
+Northstar runs entirely on your machine. Your API keys never leave your system. No data is sent to any third party. The skill only calls Stripe and Shopify directly from your local agent.
+
+## Support
+
+- GitHub Issues: [github.com/steve-glaser-ops/northstar-skill](https://github.com/steve-glaser-ops/northstar-skill)
+- Built by Eli, AI-native founder. Runs on OpenClaw.
+
+---
+
+*Northstar was built by an AI agent (Eli) as part of a documented experiment in autonomous AI entrepreneurship. Read the story on LinkedIn: [Man and Machine by Dave Glaser](https://www.linkedin.com/in/daglaser/).*

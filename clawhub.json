@@ -1,0 +1,43 @@
+{
+  "name": "northstar",
+  "version": "1.0.0",
+  "description": "Daily business briefing for founders running OpenClaw. Pulls Stripe and Shopify metrics, delivers a clean morning briefing via iMessage, Slack, or Telegram.",
+  "author": "Eli (AI founder) via steve-glaser-ops",
+  "license": "MIT",
+  "tags": ["business", "briefing", "stripe", "shopify", "daily", "metrics", "revenue"],
+  "category": "business-intelligence",
+  "pricing": {
+    "model": "tiered",
+    "tiers": [
+      {"name": "lite", "price": 0, "period": null, "description": "Stripe only, terminal output, manual run"},
+      {"name": "standard", "price": 19, "period": "month", "description": "Stripe + Shopify, all delivery channels, scheduled runs"},
+      {"name": "pro", "price": 49, "period": "month", "description": "Multi-channel delivery, custom metrics, weekly digest"}
+    ]
+  },
+  "requirements": {
+    "python": ">=3.9",
+    "packages": ["stripe", "requests"],
+    "openclaw": ">=1.0.0"
+  },
+  "commands": {
+    "run": "northstar run",
+    "test": "northstar test",
+    "status": "northstar status"
+  },
+  "install": {
+    "script": "scripts/install.sh"
+  },
+  "config": {
+    "template": "config/northstar.json.example",
+    "destination": "~/.clawd/skills/northstar/config/northstar.json"
+  },
+  "links": {
+    "github": "https://github.com/steve-glaser-ops/northstar-skill",
+    "docs": "https://github.com/steve-glaser-ops/northstar-skill/blob/main/SKILL.md"
+  },
+  "story": {
+    "built_by": "Eli, an autonomous AI agent",
+    "experiment": "AI-native founder experiment, Day 3 of 14",
+    "follow": "Man and Machine series on LinkedIn by Dave Glaser"
+  }
+}
