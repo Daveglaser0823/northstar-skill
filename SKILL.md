@@ -139,6 +139,8 @@ Set `monthly_revenue_goal` to your MRR target **in dollars** (e.g., `24900` = $2
 | `northstar status` | Show config status and last run info |
 | `northstar stripe` | Show Stripe data only (debug) |
 | `northstar shopify` | Show Shopify data only (debug) |
+| `northstar digest` | [Pro] Run weekly digest (7-day rollup, Sunday format) |
+| `northstar trend` | [Pro] Show 7-day revenue trend with sparkline |
 
 ## Metrics Calculated
 

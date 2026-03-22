@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.0.0
+Version: 1.1.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe and Shopify metrics, formats a daily briefing,
@@ -15,6 +15,21 @@ import subprocess
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Optional
+
+# Pro module (optional - only imported when Pro commands are used)
+def _load_pro():
+    """Lazy-load the Pro module from the same directory."""
+    import importlib.util
+    pro_path = Path(__file__).parent / "northstar_pro.py"
+    if not pro_path.exists():
+        print("Error: northstar_pro.py not found.")
+        sys.exit(1)
+    spec = importlib.util.spec_from_file_location("northstar_pro", pro_path)
+    mod = importlib.util.module_from_spec(spec)
+    # Inject this module into sys.modules so northstar_pro can 'from northstar import ...'
+    sys.modules["northstar"] = sys.modules[__name__]
+    spec.loader.exec_module(mod)
+    return mod
 
 # ---- Config ----------------------------------------------------------------
 
@@ -525,6 +540,18 @@ def cmd_shopify(config: dict):
     data = fetch_shopify_metrics(domain, token)
     print(json.dumps(data, indent=2))
 
+
+def cmd_digest(config: dict, dry_run: bool = False):
+    """Run weekly digest (Pro only)."""
+    pro = _load_pro()
+    pro.cmd_digest(config, dry_run=dry_run)
+
+
+def cmd_trend(config: dict):
+    """Show 7-day revenue trend (Pro only)."""
+    pro = _load_pro()
+    pro.cmd_trend(config)
+
 # ---- CLI -------------------------------------------------------------------
 
 def main():
@@ -538,19 +565,23 @@ Commands:
   status    Show config and last run info
   stripe    Show raw Stripe data (debug)
   shopify   Show raw Shopify data (debug)
+  digest    [Pro] Run weekly digest (7-day rollup, Sunday format)
+  trend     [Pro] Show 7-day revenue trend sparkline
 
 Examples:
   northstar run
   northstar test
   northstar status
+  northstar digest          # Pro tier only
+  northstar trend           # Pro tier only
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify"],
+                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend"],
                         help="Command to run (default: run)")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.0.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.1.0")
 
     args = parser.parse_args()
 
@@ -572,6 +603,10 @@ Examples:
         cmd_stripe(config)
     elif args.command == "shopify":
         cmd_shopify(config)
+    elif args.command == "digest":
+        cmd_digest(config, dry_run=False)
+    elif args.command == "trend":
+        cmd_trend(config)
 
 
 if __name__ == "__main__":

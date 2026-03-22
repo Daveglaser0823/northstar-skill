@@ -20,6 +20,12 @@ INSTALL_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp "$INSTALL_SRC/northstar.py" "$SCRIPTS_DIR/northstar.py"
 chmod +x "$SCRIPTS_DIR/northstar.py"
 
+# Copy Pro module (always included; gated by tier config, not install)
+if [ -f "$INSTALL_SRC/northstar_pro.py" ]; then
+    cp "$INSTALL_SRC/northstar_pro.py" "$SCRIPTS_DIR/northstar_pro.py"
+    echo "  ✓ Pro module installed (Pro features require tier: pro in config)"
+fi
+
 # Copy config example (don't overwrite existing config)
 CONFIG_EXAMPLE="$(cd "$INSTALL_SRC/.." && pwd)/config/northstar.json.example"
 if [ -f "$CONFIG_EXAMPLE" ]; then

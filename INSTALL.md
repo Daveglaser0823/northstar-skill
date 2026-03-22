@@ -209,6 +209,8 @@ Use `northstar test` for on-demand terminal output.
 | `northstar status` | Show config status and last run info |
 | `northstar stripe` | Show raw Stripe data (for debugging) |
 | `northstar shopify` | Show raw Shopify data (for debugging) |
+| `northstar digest` | [Pro] Run weekly digest (7-day rollup, Sunday format) |
+| `northstar trend` | [Pro] Show 7-day revenue trend with sparkline |
 | `northstar --help` | Full help |
 
 ---
