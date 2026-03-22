@@ -52,7 +52,24 @@ def fetch_stripe_metrics(api_key: str, goal_dollars: float, currency: str = "usd
         import stripe
     except ImportError:
         print("Installing stripe package...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "stripe", "-q"], check=True)
+        # macOS Homebrew Python requires --break-system-packages
+        installed = False
+        for flags in [
+            ["--user", "--break-system-packages"],
+            ["--user"],
+            [],
+        ]:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install"] + flags + ["stripe", "-q"],
+                capture_output=True
+            )
+            if result.returncode == 0:
+                installed = True
+                break
+        if not installed:
+            print("Error: Could not install stripe package.")
+            print("Run manually: pip3 install --user --break-system-packages stripe")
+            sys.exit(1)
         import stripe
 
     stripe.api_key = api_key
@@ -110,13 +127,16 @@ def fetch_stripe_metrics(api_key: str, goal_dollars: float, currency: str = "usd
     )
     new_sub_count = len(list(new_subs.auto_paging_iter()))
 
-    # Churned subscribers yesterday
+    # Churned subscribers yesterday (canceled_at is when cancellation happened)
     canceled_subs = stripe.Subscription.list(
-        created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
         status="canceled",
         limit=100
     )
-    churned_count = len(list(canceled_subs.auto_paging_iter()))
+    churned_count = sum(
+        1 for sub in canceled_subs.auto_paging_iter()
+        if sub.get("canceled_at") and
+        int(yesterday_start.timestamp()) <= sub["canceled_at"] < int(yesterday_end.timestamp())
+    )
 
     # Payment failures
     failed_charges = stripe.Charge.list(
@@ -354,17 +374,33 @@ def deliver(message: str, config: dict, dry_run: bool = False) -> bool:
     if channel == "imessage":
         if not recipient:
             raise ValueError("delivery.recipient must be set for iMessage")
-        # Use AppleScript to send iMessage
+        # Write a temp AppleScript file to handle multi-line messages safely
+        # (osascript -e can't handle multi-line strings reliably)
+        import tempfile, os
+        # Convert newlines to AppleScript line continuation
+        # AppleScript uses (return) or (ASCII character 10) for newlines
+        # Build the message as a concatenated AppleScript string
+        parts = message.split("\n")
+        # Escape double quotes in each part
+        escaped_parts = [p.replace("\\", "\\\\").replace('"', '\\"') for p in parts]
+        # Join with AppleScript return character
+        as_msg = ' & return & '.join(f'"{p}"' for p in escaped_parts)
         script = f'''
 tell application "Messages"
     set targetService to 1st account whose service type = iMessage
     set targetBuddy to participant "{recipient}" of targetService
-    send "{message.replace('"', '\\"')}" to targetBuddy
+    send ({as_msg}) to targetBuddy
 end tell
 '''
-        result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
-        if result.returncode != 0:
-            raise RuntimeError(f"iMessage send failed: {result.stderr}")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".applescript", delete=False) as f:
+            f.write(script)
+            tmp_path = f.name
+        try:
+            result = subprocess.run(["osascript", tmp_path], capture_output=True, text=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"iMessage send failed: {result.stderr}")
+        finally:
+            os.unlink(tmp_path)
         return True
 
     elif channel == "slack":

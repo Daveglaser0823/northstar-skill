@@ -7,13 +7,13 @@ set -e
 SKILL_DIR="$HOME/.clawd/skills/northstar"
 SCRIPTS_DIR="$SKILL_DIR/scripts"
 CONFIG_DIR="$SKILL_DIR/config"
-BIN_DIR="/usr/local/bin"
+BIN_DIR="$HOME/.local/bin"
 
 echo "Installing Northstar Daily Business Briefing..."
 echo ""
 
 # Create directories
-mkdir -p "$SCRIPTS_DIR" "$CONFIG_DIR"
+mkdir -p "$SCRIPTS_DIR" "$CONFIG_DIR" "$BIN_DIR"
 
 # Copy scripts
 INSTALL_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -33,23 +33,41 @@ if [ -f "$CONFIG_EXAMPLE" ]; then
     fi
 fi
 
-# Create wrapper script in /usr/local/bin
+# Create wrapper script in ~/.local/bin (no sudo required)
 WRAPPER="$BIN_DIR/northstar"
-cat > "$WRAPPER" << 'EOF'
+cat > "$WRAPPER" << 'WRAPPER_EOF'
 #!/usr/bin/env bash
 exec python3 "$HOME/.clawd/skills/northstar/scripts/northstar.py" "$@"
-EOF
+WRAPPER_EOF
 chmod +x "$WRAPPER"
 echo "  ✓ Installed: $WRAPPER"
+
+# Check PATH
+if echo "$PATH" | grep -q "$BIN_DIR"; then
+    echo "  ✓ $BIN_DIR is in your PATH"
+else
+    echo ""
+    echo "  ⚠️  Add to your PATH to use 'northstar' command:"
+    echo "     echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc && source ~/.zshrc"
+    echo ""
+    echo "  Or run directly: python3 ~/.clawd/skills/northstar/scripts/northstar.py <command>"
+fi
 
 # Install Python dependencies
 echo ""
 echo "Checking Python dependencies..."
 python3 -c "import stripe" 2>/dev/null || {
     echo "  Installing stripe..."
-    pip3 install stripe -q
+    # macOS Homebrew Python requires --break-system-packages or --user + that flag
+    pip3 install --user --break-system-packages stripe -q 2>/dev/null || \
+    pip3 install --user stripe -q 2>/dev/null || \
+    pip3 install stripe -q 2>/dev/null || {
+        echo "  ⚠️  Could not auto-install stripe. Install manually:"
+        echo "     pip3 install --user --break-system-packages stripe"
+        echo "  Then re-run: northstar test"
+    }
 }
-echo "  ✓ Dependencies ready"
+python3 -c "import stripe" 2>/dev/null && echo "  ✓ Dependencies ready" || echo "  ⚠️  stripe package not found - see above"
 
 echo ""
 echo "Installation complete!"

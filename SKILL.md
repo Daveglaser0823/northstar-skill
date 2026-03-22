@@ -119,7 +119,7 @@ Config file: `~/.clawd/skills/northstar/config/northstar.json`
    - `invoices` (read)
 3. Paste the key into `stripe.api_key`
 
-Set `monthly_revenue_goal` to your MRR target (in cents or dollars - the script auto-detects).
+Set `monthly_revenue_goal` to your MRR target **in dollars** (e.g., `24900` = $24,900/month goal).
 
 ### Shopify Setup
 
