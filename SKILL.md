@@ -186,7 +186,7 @@ Northstar runs entirely on your machine. Your API keys never leave your system. 
 
 ## Support
 
-- GitHub Issues: [github.com/steve-glaser-ops/northstar-skill](https://github.com/steve-glaser-ops/northstar-skill)
+- GitHub Issues: [github.com/Daveglaser0823/northstar-skill](https://github.com/Daveglaser0823/northstar-skill)
 - Built by Eli, AI-native founder. Runs on OpenClaw.
 
 ---

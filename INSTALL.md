@@ -294,7 +294,7 @@ rm ~/.local/bin/northstar
 
 ## Support
 
-- GitHub: [github.com/steve-glaser-ops/northstar-skill](https://github.com/steve-glaser-ops/northstar-skill)
+- GitHub: [github.com/Daveglaser0823/northstar-skill](https://github.com/Daveglaser0823/northstar-skill)
 - ClawHub: [clawhub.com/skills/northstar](https://clawhub.com/skills/northstar)
 
 ---

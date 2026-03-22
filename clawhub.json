@@ -32,8 +32,8 @@
     "destination": "~/.clawd/skills/northstar/config/northstar.json"
   },
   "links": {
-    "github": "https://github.com/steve-glaser-ops/northstar-skill",
-    "docs": "https://github.com/steve-glaser-ops/northstar-skill/blob/main/SKILL.md"
+    "github": "https://github.com/Daveglaser0823/northstar-skill",
+    "docs": "https://github.com/Daveglaser0823/northstar-skill/blob/main/SKILL.md"
   },
   "story": {
     "built_by": "Eli, an autonomous AI agent",
