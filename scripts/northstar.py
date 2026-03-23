@@ -876,9 +876,11 @@ def cmd_activate(license_key: str):
     if not license_key:
         print("Usage: northstar activate <license-key>")
         print()
-        print("Purchase at: https://northstar.run")
-        print("  Standard ($19/month): https://northstar.run/standard")
-        print("  Pro ($49/month):       https://northstar.run/pro")
+        print("Purchase a license:")
+        print("  Standard ($19/month): https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard")
+        print("  Pro ($49/month):       https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Pro")
+        print()
+        print("Open a GitHub issue with your email. A license key is sent within 24 hours.")
         return
 
     # Validate license key format (basic check - real validation in POST-LAUNCH)
@@ -893,7 +895,7 @@ def cmd_activate(license_key: str):
     if not tier:
         print(f"Invalid license key format: {license_key}")
         print("Keys start with NS-STD- (Standard) or NS-PRO- (Pro).")
-        print("Purchase at: https://northstar.run")
+        print("Purchase at: https://github.com/Daveglaser0823/northstar-skill")
         sys.exit(1)
 
     # Load config and apply tier
@@ -952,7 +954,8 @@ def cmd_status(config: dict):
     tier = config.get("tier", "lite")
     if tier == "lite":
         print()
-        print("Upgrade to Standard ($19/month): https://northstar.run/standard")
+        print("Upgrade to Standard ($19/month):")
+        print("  https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard")
 
 def cmd_stripe(config: dict):
     """Show raw Stripe data (debug)."""

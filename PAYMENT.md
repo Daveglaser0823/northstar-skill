@@ -12,17 +12,19 @@
 
 ## How to Purchase
 
-**Standard ($19/month):** https://northstar.run/standard
+Open a GitHub issue with your email address. A license key and payment link are sent within 24 hours.
 
-**Pro ($49/month):** https://northstar.run/pro
+**Standard ($19/month):**
+https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard
 
-After purchase, you receive a license key via email. It looks like:
-- Standard: `NS-STD-XXXX-XXXX-XXXX`
-- Pro: `NS-PRO-XXXX-XXXX-XXXX`
+**Pro ($49/month):**
+https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Pro
 
 ---
 
 ## How to Activate
+
+After receiving your license key, run:
 
 ```bash
 northstar activate NS-STD-YOUR-KEY-HERE
@@ -52,7 +54,7 @@ Shopify, Lemon Squeezy, and Gumroad integrations. Delivery via iMessage, Slack, 
 Weekly digest (7-day rollup, every Sunday). 7-day revenue sparkline trend. Multi-channel delivery (up to 3 simultaneous channels). Custom metric expressions.
 
 **Is there a refund policy?**
-Yes. If Northstar doesn't work as advertised within 7 days of purchase, contact support for a full refund.
+Yes. If Northstar doesn't work as advertised within 7 days of purchase, open a GitHub issue and request a full refund.
 
 **Where is the source code?**
 MIT license. https://github.com/Daveglaser0823/northstar-skill
@@ -62,8 +64,6 @@ MIT license. https://github.com/Daveglaser0823/northstar-skill
 ## Support
 
 File issues on GitHub: https://github.com/Daveglaser0823/northstar-skill/issues
-
-Or email: northstar-support@steve.glaser.ops@gmail.com
 
 Response within 24 hours on business days.
 
