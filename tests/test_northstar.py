@@ -167,6 +167,68 @@ class TestBriefingBuild(unittest.TestCase):
         self.assertIn("Northstar", result)
 
 
+SAMPLE_GUMROAD = {
+    "source": "gumroad",
+    "revenue_yesterday": 342.00,
+    "revenue_last_week_same_day": 275.00,
+    "wow_change_pct": 24.4,
+    "revenue_mtd": 4100.00,
+    "goal_dollars": 5000.0,
+    "goal_pct": 82.0,
+    "days_remaining": 8,
+    "on_track": True,
+    "projected_month": 4920.00,
+    "sales_count": 17,
+    "refunds_count": 0,
+    "refund_total": 0.0,
+}
+
+
+class TestGumroadBriefing(unittest.TestCase):
+    def test_gumroad_revenue_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, SAMPLE_GUMROAD)
+        self.assertIn("Gumroad", result)
+        self.assertIn("$342.00", result)
+
+    def test_gumroad_wow_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, SAMPLE_GUMROAD)
+        self.assertIn("+24%", result)
+
+    def test_gumroad_mtd_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, SAMPLE_GUMROAD)
+        self.assertIn("GR month-to-date", result)
+        self.assertIn("82%", result)
+
+    def test_gumroad_sales_count_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, SAMPLE_GUMROAD)
+        self.assertIn("17 sales", result)
+
+    def test_gumroad_refund_alert(self):
+        gr_with_refund = dict(SAMPLE_GUMROAD)
+        gr_with_refund["refund_total"] = 150.0
+        gr_with_refund["refunds_count"] = 2
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, gr_with_refund)
+        self.assertIn("Gumroad refund", result)
+
+    def test_gumroad_no_refund_no_alert(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, SAMPLE_GUMROAD)
+        self.assertNotIn("Gumroad refund", result)
+
+    def test_gumroad_none_skipped(self):
+        """None gumroad_data should not include Gumroad section."""
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None)
+        self.assertNotIn("Gumroad", result)
+
+    def test_gumroad_no_goal_no_pct(self):
+        gr_no_goal = dict(SAMPLE_GUMROAD)
+        gr_no_goal["goal_dollars"] = 0
+        gr_no_goal["goal_pct"] = None
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, gr_no_goal)
+        self.assertIn("GR month-to-date", result)
+        # Should not show percentage if no goal set
+        self.assertNotIn("% of $0", result)
+
+
 class TestConfigLoading(unittest.TestCase):
     def test_missing_config_raises(self):
         from northstar import load_config

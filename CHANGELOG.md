@@ -1,5 +1,20 @@
 # Northstar Changelog
 
+## [1.5.0] - 2026-03-23
+
+### Added
+- **Gumroad integration**: Add your Gumroad API access token to get daily sales metrics alongside Stripe. Shows yesterday's Gumroad revenue, WoW change, sales count, MTD pacing, and refund alerts. Full parity with Lemon Squeezy integration.
+- **Gumroad in setup wizard**: Step 7 in `northstar setup` now prompts for Gumroad credentials (optional).
+- **Gumroad in config example**: `northstar.json.example` now includes `gumroad` block with inline documentation.
+- **8 new Gumroad unit tests**: `tests/test_northstar.py` now covers Gumroad revenue display, WoW change, MTD, sales count, refund alerts, and edge cases. Test count: 23 (core) + 25 (pro) = 48 total.
+
+### Changed
+- Version strings updated to 1.5.0 throughout
+- Product description updated to reflect Gumroad as fourth data source
+
+---
+
+
 All notable changes to Northstar are documented here.
 Format: [Version] - Date - Summary
 

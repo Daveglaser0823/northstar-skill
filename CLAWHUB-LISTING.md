@@ -43,6 +43,7 @@ Next: 6 days left in month, on track.
 **What it does:**
 - Pulls yesterday's Stripe revenue, new subs, churn, MRR, payment failures
 - Pulls Lemon Squeezy revenue, subscriptions, and payment status (optional)
+- Pulls Gumroad daily sales revenue, WoW change, MTD pacing, and refunds (optional)
 - Pulls Shopify orders, open orders, refunds, top products (optional)
 - Calculates week-over-week and month-to-date metrics
 - Flags anomalies that need your attention

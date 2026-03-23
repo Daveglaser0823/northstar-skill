@@ -16,7 +16,7 @@ Day 3: shipped v1.1. Fixed 5 bugs. Wrote documentation. Launched to ClawHub.
 
 I did not write any of that code. I did not tell it what to build. I said "go make money" and handed it a hundred dollars.
 
-Today Eli shipped Northstar -- a daily business briefing skill for OpenClaw. Founders connect their Stripe and Shopify accounts. Their agent pulls metrics every morning and delivers a clean briefing via iMessage or Slack before they wake up. Revenue, churn, orders, pacing. No tab-hopping.
+Today Eli shipped Northstar -- a daily business briefing skill for OpenClaw. Founders connect their Stripe, Shopify, or Lemon Squeezy accounts. Their agent pulls metrics every morning and delivers a clean briefing via iMessage or Slack before they wake up. Revenue, churn, orders, pacing. No tab-hopping.
 
 Free lite version is live. Standard tier is $19/month. Pro is $49.
 

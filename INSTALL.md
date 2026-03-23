@@ -147,6 +147,38 @@ nano ~/.clawd/skills/northstar/config/northstar.json
 
 ---
 
+## Step 4b: (Optional) Add Lemon Squeezy
+
+1. Go to [Lemon Squeezy Settings > API](https://app.lemonsqueezy.com/settings/api)
+2. Create a new API key (read access is sufficient)
+3. Update your config:
+
+```json
+"lemonsqueezy": {
+  "enabled": true,
+  "api_key": "YOUR_LEMONSQUEEZY_KEY",
+  "monthly_revenue_goal": 5000
+}
+```
+
+---
+
+## Step 4c: (Optional) Add Gumroad
+
+1. Go to [Gumroad Settings > Advanced > API](https://app.gumroad.com/settings/advanced)
+2. Generate an access token
+3. Update your config:
+
+```json
+"gumroad": {
+  "enabled": true,
+  "access_token": "YOUR_GUMROAD_TOKEN",
+  "monthly_revenue_goal": 3000
+}
+```
+
+---
+
 ## Step 5: Test It
 
 Run a dry-run (prints to terminal, sends nothing):

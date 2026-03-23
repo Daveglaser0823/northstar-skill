@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.4.0
+Version: 1.5.0
 Author: Eli (AI founder, OpenClaw-native)
 
-Pulls Stripe, Shopify, and Lemon Squeezy metrics, formats a daily briefing,
+Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
 and delivers it via iMessage, Slack, or Telegram.
 """
 
@@ -263,6 +263,140 @@ def fetch_shopify_metrics(shop_domain: str, access_token: str) -> dict:
         "top_product_units": top_product_units,
     }
 
+# ---- Gumroad --------------------------------------------------------------
+
+def fetch_gumroad_metrics(access_token: str, goal_dollars: float = 0) -> dict:
+    """Fetch yesterday's Gumroad metrics via API v2."""
+    import urllib.request
+    import urllib.parse
+
+    BASE = "https://api.gumroad.com/v2"
+
+    def gr_get(path: str, params: dict = None) -> dict:
+        p = dict(params or {})
+        p["access_token"] = access_token
+        url = f"{BASE}{path}?" + urllib.parse.urlencode(p)
+        req = urllib.request.Request(url)
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read())
+                if not data.get("success"):
+                    raise RuntimeError(f"Gumroad API error: {data.get('message', 'unknown')}")
+                return data
+        except Exception as e:
+            raise RuntimeError(f"Gumroad request failed ({path}): {e}")
+
+    now = datetime.now()
+    yesterday_start = datetime(now.year, now.month, now.day) - timedelta(days=1)
+    yesterday_end = datetime(now.year, now.month, now.day)
+    week_ago_start = yesterday_start - timedelta(days=7)
+    week_ago_end = yesterday_end - timedelta(days=7)
+    month_start = datetime(now.year, now.month, 1)
+
+    def fetch_sales_in_window(start: datetime, end: datetime) -> list:
+        """Fetch sales between start and end (Gumroad uses after/before as ISO strings)."""
+        all_sales = []
+        page_key = None
+        while True:
+            params: dict = {
+                "after": (start - timedelta(seconds=1)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "before": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
+            if page_key:
+                params["page_key"] = page_key
+            data = gr_get("/sales", params)
+            sales = data.get("sales", [])
+            all_sales.extend(sales)
+            next_page = data.get("next_page_key")
+            if not next_page:
+                break
+            page_key = next_page
+        return all_sales
+
+    # Yesterday's sales
+    sales_yesterday = fetch_sales_in_window(yesterday_start, yesterday_end)
+    revenue_yesterday = sum(
+        float(s.get("price", 0)) / 100.0  # Gumroad returns price in cents
+        for s in sales_yesterday
+        if not s.get("refunded") and not s.get("chargebacked")
+    )
+    # Actually Gumroad price may already be in dollars depending on version - check both
+    # The v2 API returns price_cents for the sale amount
+    if sales_yesterday and "price_cents" in sales_yesterday[0]:
+        revenue_yesterday = sum(
+            float(s.get("price_cents", 0)) / 100.0
+            for s in sales_yesterday
+            if not s.get("refunded") and not s.get("chargebacked")
+        )
+    elif sales_yesterday and "price" in sales_yesterday[0]:
+        # Gumroad sometimes returns price in cents as integer
+        raw = sales_yesterday[0].get("price", 0)
+        if isinstance(raw, int) and raw > 100:
+            # Likely cents
+            revenue_yesterday = sum(
+                float(s.get("price", 0)) / 100.0
+                for s in sales_yesterday
+                if not s.get("refunded") and not s.get("chargebacked")
+            )
+        else:
+            revenue_yesterday = sum(
+                float(s.get("price", 0))
+                for s in sales_yesterday
+                if not s.get("refunded") and not s.get("chargebacked")
+            )
+
+    # Same day last week (WoW)
+    sales_last_week = fetch_sales_in_window(week_ago_start, week_ago_end)
+    revenue_last_week = sum(
+        float(s.get("price_cents", s.get("price", 0))) / 100.0
+        for s in sales_last_week
+        if not s.get("refunded") and not s.get("chargebacked")
+    )
+    wow_change = None
+    if revenue_last_week > 0:
+        wow_change = ((revenue_yesterday - revenue_last_week) / revenue_last_week) * 100
+
+    # Month-to-date
+    sales_mtd = fetch_sales_in_window(month_start, yesterday_end)
+    revenue_mtd = sum(
+        float(s.get("price_cents", s.get("price", 0))) / 100.0
+        for s in sales_mtd
+        if not s.get("refunded") and not s.get("chargebacked")
+    )
+
+    # Refunds yesterday
+    refunds_yesterday = [s for s in sales_yesterday if s.get("refunded")]
+    refund_total = sum(
+        float(s.get("price_cents", s.get("price", 0))) / 100.0
+        for s in refunds_yesterday
+    )
+
+    # MTD pacing
+    days_in_month = (datetime(now.year, now.month % 12 + 1, 1) - timedelta(days=1)).day if now.month < 12 else 31
+    days_elapsed = now.day - 1
+    days_remaining = days_in_month - days_elapsed
+    goal_pct = (revenue_mtd / goal_dollars * 100) if goal_dollars > 0 else None
+    daily_run_rate = revenue_mtd / days_elapsed if days_elapsed > 0 else 0
+    projected_month = daily_run_rate * days_in_month if daily_run_rate > 0 else 0
+    on_track = projected_month >= goal_dollars if goal_dollars > 0 else None
+
+    return {
+        "source": "gumroad",
+        "revenue_yesterday": revenue_yesterday,
+        "revenue_last_week_same_day": revenue_last_week,
+        "wow_change_pct": wow_change,
+        "revenue_mtd": revenue_mtd,
+        "goal_dollars": goal_dollars,
+        "goal_pct": goal_pct,
+        "days_remaining": days_remaining,
+        "on_track": on_track,
+        "projected_month": projected_month,
+        "sales_count": len([s for s in sales_yesterday if not s.get("refunded")]),
+        "refunds_count": len(refunds_yesterday),
+        "refund_total": refund_total,
+    }
+
+
 # ---- Lemon Squeezy --------------------------------------------------------
 
 def fetch_lemon_squeezy_metrics(api_key: str, goal_dollars: float = 0) -> dict:
@@ -436,7 +570,8 @@ def fmt_pct(pct: float, sign: bool = True) -> str:
     return s
 
 def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Optional[dict],
-                   lemonsqueezy_data: Optional[dict] = None) -> str:
+                   lemonsqueezy_data: Optional[dict] = None,
+                   gumroad_data: Optional[dict] = None) -> str:
     """Build the briefing message."""
     now = datetime.now()
     use_emoji = config.get("format", {}).get("emoji", True)
@@ -505,6 +640,23 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
         else:
             lines.append(f"LS month-to-date: {fmt_currency(ls['revenue_mtd'])}")
 
+    # Gumroad section
+    if gumroad_data:
+        gr = gumroad_data
+        rev = gr["revenue_yesterday"]
+        wow = gr.get("wow_change_pct")
+        wow_str = f" ({fmt_pct(wow)} vs last week)" if wow is not None else ""
+        sales_count = gr.get("sales_count", 0)
+        lines.append(f"Gumroad: {fmt_currency(rev)} yesterday{wow_str} ({sales_count} sales)")
+
+        if gr.get("goal_pct") is not None:
+            mtd = gr["revenue_mtd"]
+            goal = gr["goal_dollars"]
+            pct = gr["goal_pct"]
+            lines.append(f"GR month-to-date: {fmt_currency(mtd)} ({pct:.0f}% of {fmt_currency(goal)} goal)")
+        else:
+            lines.append(f"GR month-to-date: {fmt_currency(gr['revenue_mtd'])}")
+
     # Shopify section
     if shopify_data and config.get("shopify", {}).get("enabled"):
         fulfilled = shopify_data["orders_fulfilled"]
@@ -545,6 +697,10 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
         if lemonsqueezy_data.get("churned_subs", 0) >= churn_threshold:
             warn = "⚠️ " if use_emoji else "ALERT: "
             alerts.append(f"{warn}High LS churn: {lemonsqueezy_data['churned_subs']} cancellations yesterday")
+
+    if gumroad_data and gumroad_data.get("refund_total", 0) >= config.get("alerts", {}).get("large_refund_threshold", 100):
+        warn = "⚠️ " if use_emoji else "ALERT: "
+        alerts.append(f"{warn}Large Gumroad refund: {fmt_currency(gumroad_data['refund_total'])} - review in Gumroad")
 
     if shopify_data and shopify_data.get("refund_total", 0) >= config.get("alerts", {}).get("large_refund_threshold", 100):
         warn = "⚠️ " if use_emoji else "ALERT: "
@@ -643,8 +799,9 @@ def cmd_run(config: dict, dry_run: bool = False):
     stripe_data = None
     shopify_data = None
     lemonsqueezy_data = None
+    gumroad_data = None
 
-    print(f"Northstar v1.4.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.5.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -669,6 +826,17 @@ def cmd_run(config: dict, dry_run: bool = False):
             lemonsqueezy_data = fetch_lemon_squeezy_metrics(ls_key, float(ls_goal))
             print("OK")
 
+    # Fetch Gumroad
+    if config.get("gumroad", {}).get("enabled"):
+        gr_token = config["gumroad"].get("access_token", "")
+        if not gr_token or gr_token.startswith("YOUR_"):
+            print("  Gumroad: SKIP (no access token configured)")
+        else:
+            print("  Fetching Gumroad data...", end=" ", flush=True)
+            gr_goal = config["gumroad"].get("monthly_revenue_goal", 0)
+            gumroad_data = fetch_gumroad_metrics(gr_token, float(gr_goal))
+            print("OK")
+
     # Fetch Shopify
     if config.get("shopify", {}).get("enabled"):
         domain = config["shopify"].get("shop_domain", "")
@@ -680,13 +848,13 @@ def cmd_run(config: dict, dry_run: bool = False):
             shopify_data = fetch_shopify_metrics(domain, token)
             print("OK")
 
-    if not stripe_data and not lemonsqueezy_data and not shopify_data:
+    if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data:
         print("\n  No data sources configured. Edit your config file.")
         print(f"  Config: {CONFIG_PATH}")
         return
 
     # Build and deliver briefing
-    briefing = build_briefing(config, stripe_data, shopify_data, lemonsqueezy_data)
+    briefing = build_briefing(config, stripe_data, shopify_data, lemonsqueezy_data, gumroad_data)
 
     if dry_run:
         deliver(briefing, config, dry_run=True)
@@ -1002,6 +1170,31 @@ def cmd_setup():
     else:
         config["lemonsqueezy"] = {"enabled": False}
 
+    # --- Gumroad ---
+    if tier in ("standard", "pro"):
+        print("Step 7: Gumroad (optional)")
+        print("  If you sell digital products on Gumroad, add it here for a combined revenue view.")
+        print("  Get your access token at: app.gumroad.com/settings/advanced")
+        print()
+        gr_enabled = ask_yn("Do you use Gumroad?", default=False)
+        if gr_enabled:
+            gr_token = ask("Gumroad API access token", secret=True)
+            gr_goal_str = ask("Monthly revenue goal in dollars (Gumroad)", default="0")
+            try:
+                gr_goal = float(gr_goal_str.replace(",", "").replace("$", ""))
+            except ValueError:
+                gr_goal = 0.0
+            config["gumroad"] = {
+                "enabled": True,
+                "access_token": gr_token,
+                "monthly_revenue_goal": gr_goal,
+            }
+        else:
+            config["gumroad"] = {"enabled": False}
+        print()
+    else:
+        config["gumroad"] = {"enabled": False}
+
     # --- Alerts ---
     config["alerts"] = {
         "payment_failures": True,
@@ -1091,7 +1284,7 @@ Examples:
                         help="Command to run (default: run)")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.4.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.5.0")
 
     args = parser.parse_args()
 

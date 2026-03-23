@@ -43,6 +43,14 @@
     "monthly_revenue_goal": 0
   },
 
+  "gumroad": {
+    "_comment": "Optional. If you sell via Gumroad, add your API access token for combined revenue view.",
+    "_comment_token": "Get your access token at: app.gumroad.com/settings/advanced (API section)",
+    "enabled": false,
+    "access_token": "YOUR_GUMROAD_ACCESS_TOKEN",
+    "monthly_revenue_goal": 0
+  },
+
   "alerts": {
     "payment_failures": true,
     "churn_threshold": 3,

@@ -48,6 +48,7 @@ See [INSTALL.md](INSTALL.md) for the full guide, or [SKILL.md](SKILL.md) for tec
 |--------|-------|
 | Stripe | Revenue, subscriptions, churn, payment failures |
 | Lemon Squeezy | Revenue, subscriptions, payment status (optional) |
+| Gumroad | Daily sales revenue, WoW change, MTD pacing, refunds (optional) |
 | Shopify | Orders, refunds, top products (optional) |
 
 Connect one or all three. Briefing combines everything into one daily message.
