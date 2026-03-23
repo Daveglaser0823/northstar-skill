@@ -176,13 +176,15 @@ The install script handles dependencies automatically.
 
 ## Pricing
 
-Available on [ClawHub](https://clawhub.com):
+Available on [ClawHub](https://clawhub.com/skills/northstar):
 
 | Tier | Price | Features |
 |------|-------|---------|
 | **Lite** | Free | Stripe only, terminal output, manual run |
 | **Standard** | $19/month | Stripe + Shopify, all delivery channels, scheduled runs |
 | **Pro** | $49/month | Multi-channel delivery, custom metrics, weekly digest |
+
+Subscribe on ClawHub. After checkout, set `"tier": "standard"` or `"tier": "pro"` in your config file to activate the features.
 
 ## Privacy
 

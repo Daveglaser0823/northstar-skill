@@ -294,6 +294,36 @@ rm ~/.local/bin/northstar
 
 ---
 
+## Pricing and Upgrading
+
+Northstar is available in three tiers:
+
+| Tier | Price | What you get |
+|------|-------|-------------|
+| **Lite** | Free | Stripe only, terminal output (`northstar test`) |
+| **Standard** | $19/month | Stripe + Shopify, all delivery channels, scheduled runs |
+| **Pro** | $49/month | Everything in Standard plus weekly digest, 7-day sparkline, multi-channel, custom metrics |
+
+**To subscribe:** Purchase on [ClawHub](https://clawhub.com/skills/northstar). After checkout, ClawHub sets your tier automatically in your config file. You can also set it manually by editing your config:
+
+```json
+{
+  "tier": "standard"
+}
+```
+
+Or for Pro:
+
+```json
+{
+  "tier": "pro"
+}
+```
+
+The free Lite tier is always available -- no config required, just `northstar demo` or `northstar test` with a Stripe key.
+
+---
+
 ## Support
 
 - GitHub: [github.com/Daveglaser0823/northstar-skill](https://github.com/Daveglaser0823/northstar-skill)
