@@ -1,5 +1,9 @@
 # Northstar
 
+![CI](https://github.com/Daveglaser0823/northstar-skill/actions/workflows/ci.yml/badge.svg)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 **Daily business briefing for founders running OpenClaw.**
 
 Wake up knowing. No tabs. No manual assembly. Your agent did the work while you slept.
