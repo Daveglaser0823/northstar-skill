@@ -5,6 +5,18 @@ Format: [Version] - Date - Summary
 
 ---
 
+## [1.3.0] - 2026-03-23
+
+### Added
+- **`northstar setup` command**: Interactive setup wizard. Guides users through all configuration steps (tier, delivery channel, credentials, schedule) without manual JSON editing. Generates a valid config file and immediately runs `northstar test` to verify setup. Estimated setup time drops from 10-12 minutes to 4-5 minutes.
+- Error message on missing config now suggests `northstar setup` and `northstar demo` as next steps.
+
+### Changed
+- Version string updated to 1.3.0
+- CLI help text updated to list `setup` as the second recommended command (after `demo`)
+
+---
+
 ## [1.2.0] - 2026-03-22
 
 ### Added

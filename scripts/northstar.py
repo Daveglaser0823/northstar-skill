@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.1.0
+Version: 1.3.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe and Shopify metrics, formats a daily briefing,
@@ -607,6 +607,228 @@ def cmd_trend(config: dict):
     pro = _load_pro()
     pro.cmd_trend(config)
 
+
+def cmd_setup():
+    """Interactive setup wizard. Walks through config without manual JSON editing."""
+    import sys
+
+    def ask(prompt: str, default: str = "", secret: bool = False) -> str:
+        """Prompt user, return stripped input or default."""
+        display = f" [{default}]" if default else ""
+        full_prompt = f"  {prompt}{display}: "
+        try:
+            if secret:
+                import getpass
+                val = getpass.getpass(full_prompt)
+            else:
+                val = input(full_prompt)
+            return val.strip() if val.strip() else default
+        except (EOFError, KeyboardInterrupt):
+            print("\nSetup cancelled.")
+            sys.exit(0)
+
+    def ask_yn(prompt: str, default: bool = True) -> bool:
+        default_str = "Y/n" if default else "y/N"
+        val = ask(f"{prompt} ({default_str})")
+        if not val:
+            return default
+        return val.lower() in ("y", "yes")
+
+    print()
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("  Northstar Setup")
+    print("  Takes about 3 minutes. You can re-run anytime.")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print()
+
+    config = {}
+
+    # --- Tier ---
+    print("Step 1: Tier")
+    print("  lite     - Free. Stripe only, terminal output.")
+    print("  standard - $19/month. Stripe + Shopify, iMessage/Slack/Telegram, scheduled.")
+    print("  pro      - $49/month. Standard + weekly digest, sparkline, custom metrics.")
+    print()
+    while True:
+        tier = ask("Your tier", default="standard").lower()
+        if tier in ("lite", "standard", "pro"):
+            break
+        print("  Enter 'lite', 'standard', or 'pro'.")
+    config["tier"] = tier
+    print()
+
+    # --- Delivery ---
+    print("Step 2: Delivery channel")
+    if tier == "lite":
+        print("  Lite tier: terminal output only. No delivery channel needed.")
+        config["delivery"] = {"channel": "none"}
+    else:
+        print("  imessage  - macOS only. Sends to your phone/Mac.")
+        print("  slack     - Any OS. Requires a Slack webhook URL.")
+        print("  telegram  - Any OS. Requires a Telegram bot token and chat ID.")
+        print("  none      - Terminal output only (for testing).")
+        print()
+        while True:
+            channel = ask("Delivery channel", default="imessage").lower()
+            if channel in ("imessage", "slack", "telegram", "none"):
+                break
+            print("  Enter 'imessage', 'slack', 'telegram', or 'none'.")
+        delivery: dict = {"channel": channel}
+
+        if channel == "imessage":
+            print()
+            print("  Your phone number in E.164 format (e.g. +15551234567).")
+            while True:
+                num = ask("Your phone number")
+                if num.startswith("+") and len(num) >= 10:
+                    break
+                print("  Must start with + and country code (e.g. +15551234567).")
+            delivery["recipient"] = num
+            delivery["imessage_recipient"] = num
+
+        elif channel == "slack":
+            print()
+            print("  Get a webhook URL at: api.slack.com/apps > your app > Incoming Webhooks.")
+            webhook = ask("Slack webhook URL")
+            delivery["slack_webhook"] = webhook
+
+        elif channel == "telegram":
+            print()
+            print("  Create a bot via @BotFather on Telegram.")
+            bot_token = ask("Telegram bot token")
+            chat_id = ask("Telegram chat ID")
+            delivery["telegram_bot_token"] = bot_token
+            delivery["telegram_chat_id"] = chat_id
+
+        config["delivery"] = delivery
+    print()
+
+    # --- Schedule ---
+    print("Step 3: Schedule (when to deliver your briefing)")
+    hour_str = ask("Hour (24h format)", default="6")
+    try:
+        hour = int(hour_str)
+    except ValueError:
+        hour = 6
+    minute_str = ask("Minute", default="0")
+    try:
+        minute = int(minute_str)
+    except ValueError:
+        minute = 0
+
+    import time
+    local_tz = time.strftime("%Z")
+    # Map common abbreviations to IANA names
+    _tz_map = {
+        "EST": "America/New_York", "EDT": "America/New_York",
+        "CST": "America/Chicago", "CDT": "America/Chicago",
+        "MST": "America/Denver", "MDT": "America/Denver",
+        "PST": "America/Los_Angeles", "PDT": "America/Los_Angeles",
+    }
+    guessed_tz = _tz_map.get(local_tz, "America/New_York")
+    tz = ask("Timezone (IANA name)", default=guessed_tz)
+    config["schedule"] = {"hour": hour, "minute": minute, "timezone": tz, "digest_day": 6}
+    print()
+
+    # --- Stripe ---
+    print("Step 4: Stripe")
+    print("  Get a restricted API key at: dashboard.stripe.com/apikeys")
+    print("  Needs read permissions for: Charges, Customers, Subscriptions, Invoices, Payment Intents.")
+    print()
+    stripe_enabled = ask_yn("Do you have a Stripe account?", default=True)
+    if stripe_enabled:
+        stripe_key = ask("Stripe restricted API key (sk_live_...)", secret=True)
+        goal_str = ask("Monthly revenue goal in dollars", default="10000")
+        try:
+            goal = float(goal_str.replace(",", "").replace("$", ""))
+        except ValueError:
+            goal = 10000.0
+        config["stripe"] = {
+            "enabled": True,
+            "api_key": stripe_key,
+            "monthly_revenue_goal": goal,
+            "currency": "usd",
+        }
+    else:
+        config["stripe"] = {"enabled": False}
+    print()
+
+    # --- Shopify ---
+    if tier in ("standard", "pro"):
+        print("Step 5: Shopify (optional)")
+        print("  Adds daily order counts, refunds, and top product to your briefing.")
+        print()
+        shopify_enabled = ask_yn("Do you have a Shopify store?", default=False)
+        if shopify_enabled:
+            domain = ask("Shopify store domain (e.g. your-store.myshopify.com)")
+            token = ask("Shopify Admin API access token (shpat_...)", secret=True)
+            config["shopify"] = {
+                "enabled": True,
+                "shop_domain": domain,
+                "access_token": token,
+            }
+        else:
+            config["shopify"] = {"enabled": False}
+        print()
+    else:
+        config["shopify"] = {"enabled": False}
+
+    # --- Alerts ---
+    config["alerts"] = {
+        "payment_failures": True,
+        "churn_threshold": 3,
+        "large_refund_threshold": 100,
+    }
+
+    # --- Format ---
+    config["format"] = {
+        "emoji": True,
+        "include_pacing": True,
+        "include_shopify_detail": True,
+    }
+
+    if tier == "pro":
+        config["format"]["include_trend"] = True
+        config["custom_metrics"] = []
+
+    # --- Write config ---
+    config_path = CONFIG_PATH
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if config_path.exists():
+        print(f"Config already exists at: {config_path}")
+        overwrite = ask_yn("Overwrite it?", default=False)
+        if not overwrite:
+            print("Setup cancelled. Existing config unchanged.")
+            sys.exit(0)
+
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=2)
+        f.write("\n")
+
+    print()
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"  Config saved to: {config_path}")
+    print()
+    print("  Running northstar test to verify your setup...")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print()
+
+    # Run test
+    cmd_run(config, dry_run=True)
+
+    print()
+    print("Setup complete!")
+    print()
+    print("Next steps:")
+    print("  Schedule daily delivery:  add '0 6 * * * northstar run' to OpenClaw cron")
+    print("  Or run now:               northstar run")
+    print("  Check status anytime:     northstar status")
+    print()
+    if tier != "lite":
+        print("To upgrade your tier, visit: https://clawhub.com/skills/northstar")
+        print()
+
 # ---- CLI -------------------------------------------------------------------
 
 def main():
@@ -616,6 +838,7 @@ def main():
         epilog="""
 Commands:
   demo      Show a sample briefing with demo data (no config needed)
+  setup     Interactive setup wizard - configure without editing JSON
   run       Run briefing and deliver to configured channel
   test      Dry-run - print briefing to terminal only
   status    Show config and last run info
@@ -626,6 +849,7 @@ Commands:
 
 Examples:
   northstar demo            # Try it first - no config needed
+  northstar setup           # Configure interactively - no JSON editing required
   northstar run
   northstar test
   northstar status
@@ -634,17 +858,21 @@ Examples:
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend", "demo"],
+                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend", "demo", "setup"],
                         help="Command to run (default: run)")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.2.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.3.0")
 
     args = parser.parse_args()
 
-    # Demo doesn't need config
+    # Demo and setup don't need config
     if args.command == "demo":
         cmd_demo()
+        return
+
+    if args.command == "setup":
+        cmd_setup()
         return
 
     # Load config
@@ -652,6 +880,9 @@ Examples:
         config = load_config(args.config)
     except FileNotFoundError as e:
         print(f"Error: {e}")
+        print()
+        print("Run 'northstar setup' to configure interactively.")
+        print("Run 'northstar demo' to see a sample briefing.")
         sys.exit(1)
 
     # Dispatch
