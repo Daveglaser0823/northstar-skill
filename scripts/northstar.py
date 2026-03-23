@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.9.5
+Version: 2.0.0
 Author: Eli (AI founder, OpenClaw-native)
 
-Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
+Pulls Stripe, Shopify, Lemon Squeezy, Gumroad, and Dwolla metrics, formats a daily briefing,
 and delivers it via iMessage, Slack, or Telegram.
 """
 
@@ -397,6 +397,194 @@ def fetch_gumroad_metrics(access_token: str, goal_dollars: float = 0) -> dict:
     }
 
 
+# ---- Dwolla ----------------------------------------------------------------
+
+def fetch_dwolla_metrics(key: str, secret: str, environment: str = "production",
+                         goal_dollars: float = 0) -> dict:
+    """
+    Fetch yesterday's Dwolla transfer metrics.
+
+    Auth: OAuth2 client_credentials via Basic auth.
+    Base URLs:
+      production: https://api.dwolla.com
+      sandbox:    https://api-sandbox.dwolla.com
+    """
+    import urllib.request
+    import urllib.parse
+    import base64
+
+    base_url = (
+        "https://api-sandbox.dwolla.com"
+        if environment == "sandbox"
+        else "https://api.dwolla.com"
+    )
+
+    # ---- 1. Get access token -----------------------------------------------
+    token_url = f"{base_url}/token"
+    credentials = base64.b64encode(f"{key}:{secret}".encode()).decode()
+    token_body = urllib.parse.urlencode({"grant_type": "client_credentials"}).encode()
+    token_req = urllib.request.Request(
+        token_url,
+        data=token_body,
+        headers={
+            "Authorization": f"Basic {credentials}",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(token_req, timeout=15) as resp:
+            token_data = json.loads(resp.read())
+    except Exception as e:
+        raise RuntimeError(f"Dwolla auth failed: {e}")
+
+    access_token = token_data.get("access_token")
+    if not access_token:
+        raise RuntimeError(f"Dwolla auth failed: no access_token in response: {token_data}")
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/vnd.dwolla.v1.hal+json",
+    }
+
+    def dwolla_get(path: str, params: dict = None) -> dict:
+        url = base_url + path
+        if params:
+            url += "?" + urllib.parse.urlencode(params)
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Dwolla GET {path} => HTTP {e.code}: {body[:200]}")
+
+    # ---- 2. Get account root (to find account ID) --------------------------
+    root = dwolla_get("/")
+    account_href = (
+        root.get("_links", {})
+            .get("account", {})
+            .get("href", "")
+    )
+    if not account_href:
+        raise RuntimeError("Dwolla root response missing account link")
+    account_id = account_href.rstrip("/").split("/")[-1]
+
+    # ---- 3. Fetch transfers for yesterday + MTD ----------------------------
+    now = datetime.now()
+    yesterday_start = datetime(now.year, now.month, now.day) - timedelta(days=1)
+    yesterday_end = datetime(now.year, now.month, now.day)
+    month_start = datetime(now.year, now.month, 1)
+    week_ago_start = yesterday_start - timedelta(days=7)
+    week_ago_end = yesterday_end - timedelta(days=7)
+
+    def fetch_transfers_in_window(start: datetime, end: datetime) -> list:
+        """Page through transfers in a date window. Returns list of transfer objects."""
+        all_transfers = []
+        params = {
+            "startDate": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "endDate": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "limit": 200,
+        }
+        path = f"/accounts/{account_id}/transfers"
+        while True:
+            data = dwolla_get(path, params)
+            transfers = (
+                data.get("_embedded", {}).get("transfers", [])
+            )
+            all_transfers.extend(transfers)
+            # Check for next page
+            next_href = data.get("_links", {}).get("next", {}).get("href")
+            if not next_href:
+                break
+            # Extract offset/limit from next URL and continue
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(next_href).query)
+            params["offset"] = qs.get("offset", [None])[0]
+            if not params["offset"]:
+                break
+        return all_transfers
+
+    transfers_yesterday = fetch_transfers_in_window(yesterday_start, yesterday_end)
+    transfers_last_week = fetch_transfers_in_window(week_ago_start, week_ago_end)
+    transfers_mtd = fetch_transfers_in_window(month_start, yesterday_end)
+
+    def summarize_transfers(transfers: list) -> dict:
+        """Compute volume, count, success/failure breakdown."""
+        processed = [t for t in transfers if t.get("status") == "processed"]
+        failed = [t for t in transfers if t.get("status") in ("failed", "cancelled", "returned")]
+        pending = [t for t in transfers if t.get("status") in ("pending", "processing")]
+
+        def vol(lst):
+            return sum(
+                float(t.get("amount", {}).get("value", 0))
+                for t in lst
+            )
+
+        return {
+            "count": len(transfers),
+            "volume": vol(processed),
+            "processed": len(processed),
+            "failed": len(failed),
+            "pending": len(pending),
+            "failed_volume": vol(failed),
+            "pending_volume": vol(pending),
+        }
+
+    summary_yesterday = summarize_transfers(transfers_yesterday)
+    summary_last_week = summarize_transfers(transfers_last_week)
+    summary_mtd = summarize_transfers(transfers_mtd)
+
+    # WoW change (volume)
+    wow_change = None
+    vol_yday = summary_yesterday["volume"]
+    vol_lw = summary_last_week["volume"]
+    if vol_lw > 0:
+        wow_change = ((vol_yday - vol_lw) / vol_lw) * 100
+
+    # MTD pacing
+    days_in_month = (
+        (datetime(now.year, now.month % 12 + 1, 1) - timedelta(days=1)).day
+        if now.month < 12
+        else 31
+    )
+    days_elapsed = max(1, now.day - 1)
+    days_remaining = days_in_month - days_elapsed
+    daily_run_rate = summary_mtd["volume"] / days_elapsed
+    projected_month = daily_run_rate * days_in_month
+    on_track = projected_month >= goal_dollars if goal_dollars > 0 else None
+    goal_pct = (summary_mtd["volume"] / goal_dollars * 100) if goal_dollars > 0 else None
+
+    return {
+        "environment": environment,
+        # Yesterday
+        "volume_yesterday": summary_yesterday["volume"],
+        "count_yesterday": summary_yesterday["count"],
+        "processed_yesterday": summary_yesterday["processed"],
+        "failed_yesterday": summary_yesterday["failed"],
+        "pending_yesterday": summary_yesterday["pending"],
+        "failed_volume_yesterday": summary_yesterday["failed_volume"],
+        # WoW
+        "wow_change_pct": wow_change,
+        # MTD
+        "volume_mtd": summary_mtd["volume"],
+        "count_mtd": summary_mtd["count"],
+        "processed_mtd": summary_mtd["processed"],
+        "goal_dollars": goal_dollars,
+        "goal_pct": goal_pct,
+        "on_track": on_track,
+        "projected_month": projected_month,
+        "days_remaining": days_remaining,
+        # Success rate
+        "success_rate": (
+            summary_yesterday["processed"] / summary_yesterday["count"] * 100
+            if summary_yesterday["count"] > 0 else 100.0
+        ),
+        "source": "dwolla",
+    }
+
+
 # ---- Lemon Squeezy --------------------------------------------------------
 
 def fetch_lemon_squeezy_metrics(api_key: str, goal_dollars: float = 0) -> dict:
@@ -571,7 +759,8 @@ def fmt_pct(pct: float, sign: bool = True) -> str:
 
 def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Optional[dict],
                    lemonsqueezy_data: Optional[dict] = None,
-                   gumroad_data: Optional[dict] = None) -> str:
+                   gumroad_data: Optional[dict] = None,
+                   dwolla_data: Optional[dict] = None) -> str:
     """Build the briefing message."""
     now = datetime.now()
     use_emoji = config.get("format", {}).get("emoji", True)
@@ -657,6 +846,42 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
         else:
             lines.append(f"GR month-to-date: {fmt_currency(gr['revenue_mtd'])}")
 
+    # Dwolla section
+    if dwolla_data:
+        dw = dwolla_data
+        vol = dw["volume_yesterday"]
+        cnt = dw["count_yesterday"]
+        wow = dw.get("wow_change_pct")
+        wow_str = f" ({fmt_pct(wow)} vs last week)" if wow is not None else ""
+        env_tag = " [sandbox]" if dw.get("environment") == "sandbox" else ""
+        money = "💸 " if use_emoji else ""
+
+        lines.append(f"{money}Dwolla{env_tag}: {fmt_currency(vol)} across {cnt} transfer{'s' if cnt != 1 else ''}{wow_str}")
+
+        # Success / failure detail
+        processed = dw["processed_yesterday"]
+        failed = dw["failed_yesterday"]
+        pending = dw["pending_yesterday"]
+        detail_parts = [f"{processed} processed"]
+        if failed > 0:
+            detail_parts.append(f"{failed} failed")
+        if pending > 0:
+            detail_parts.append(f"{pending} pending")
+        rate = dw.get("success_rate", 100)
+        if failed > 0 or pending > 0:
+            lines.append(f"  Transfers: {' | '.join(detail_parts)} ({rate:.0f}% success)")
+        else:
+            lines.append(f"  Transfers: {' | '.join(detail_parts)}")
+
+        # MTD
+        if dw.get("goal_pct") is not None:
+            mtd = dw["volume_mtd"]
+            goal = dw["goal_dollars"]
+            pct = dw["goal_pct"]
+            lines.append(f"  Dwolla MTD: {fmt_currency(mtd)} ({pct:.0f}% of {fmt_currency(goal)} goal)")
+        else:
+            lines.append(f"  Dwolla MTD: {fmt_currency(dw['volume_mtd'])} ({dw['count_mtd']} transfers)")
+
     # Shopify section
     if shopify_data and config.get("shopify", {}).get("enabled"):
         fulfilled = shopify_data["orders_fulfilled"]
@@ -705,6 +930,16 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
     if shopify_data and shopify_data.get("refund_total", 0) >= config.get("alerts", {}).get("large_refund_threshold", 100):
         warn = "⚠️ " if use_emoji else "ALERT: "
         alerts.append(f"{warn}Large refund: {fmt_currency(shopify_data['refund_total'])} - review in Shopify")
+
+    if dwolla_data and dwolla_data.get("failed_yesterday", 0) > 0:
+        warn = "⚠️ " if use_emoji else "ALERT: "
+        failed = dwolla_data["failed_yesterday"]
+        failed_vol = dwolla_data.get("failed_volume_yesterday", 0)
+        alerts.append(
+            f"{warn}{failed} Dwolla transfer{'s' if failed > 1 else ''} failed"
+            + (f" ({fmt_currency(failed_vol)})" if failed_vol > 0 else "")
+            + " - review in Dwolla dashboard"
+        )
 
     if alerts:
         lines.append("")
@@ -809,8 +1044,9 @@ def cmd_run(config: dict, dry_run: bool = False):
     shopify_data = None
     lemonsqueezy_data = None
     gumroad_data = None
+    dwolla_data = None
 
-    print(f"Northstar v1.9.5 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v2.0.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -846,6 +1082,19 @@ def cmd_run(config: dict, dry_run: bool = False):
             gumroad_data = fetch_gumroad_metrics(gr_token, float(gr_goal))
             print("OK")
 
+    # Fetch Dwolla
+    if config.get("dwolla", {}).get("enabled"):
+        dw_key = config["dwolla"].get("key", "")
+        dw_secret = config["dwolla"].get("secret", "")
+        if not dw_key or not dw_secret or dw_key.startswith("YOUR_"):
+            print("  Dwolla: SKIP (no credentials configured)")
+        else:
+            print("  Fetching Dwolla data...", end=" ", flush=True)
+            dw_env = config["dwolla"].get("environment", "production")
+            dw_goal = config["dwolla"].get("monthly_volume_goal", 0)
+            dwolla_data = fetch_dwolla_metrics(dw_key, dw_secret, dw_env, float(dw_goal))
+            print("OK")
+
     # Fetch Shopify
     if config.get("shopify", {}).get("enabled"):
         domain = config["shopify"].get("shop_domain", "")
@@ -857,7 +1106,7 @@ def cmd_run(config: dict, dry_run: bool = False):
             shopify_data = fetch_shopify_metrics(domain, token)
             print("OK")
 
-    if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data:
+    if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data and not dwolla_data:
         print("\n  No data sources configured.")
         print(f"  Config: {CONFIG_PATH}")
         print()
@@ -866,7 +1115,7 @@ def cmd_run(config: dict, dry_run: bool = False):
         return
 
     # Build and deliver briefing
-    briefing = build_briefing(config, stripe_data, shopify_data, lemonsqueezy_data, gumroad_data)
+    briefing = build_briefing(config, stripe_data, shopify_data, lemonsqueezy_data, gumroad_data, dwolla_data)
 
     if dry_run:
         deliver(briefing, config, dry_run=True)
@@ -1416,6 +1665,37 @@ def cmd_setup():
     else:
         config["gumroad"] = {"enabled": False}
 
+    # --- Dwolla ---
+    if tier in ("standard", "pro"):
+        print("Step 8: Dwolla (optional)")
+        print("  If you process ACH transfers via Dwolla, Northstar can show daily")
+        print("  transfer volume, success/failure rates, and MTD pacing.")
+        print("  Get your API credentials at: dashboard.dwolla.com/applications")
+        print()
+        dw_enabled = ask_yn("Do you use Dwolla?", default=False)
+        if dw_enabled:
+            dw_key = ask("Dwolla API key (Client ID)")
+            dw_secret = ask("Dwolla API secret", secret=True)
+            dw_env_raw = ask("Environment: production or sandbox?", default="production")
+            dw_env = "sandbox" if "sand" in dw_env_raw.lower() else "production"
+            dw_goal_str = ask("Monthly transfer volume goal in dollars (optional)", default="0")
+            try:
+                dw_goal = float(dw_goal_str.replace(",", "").replace("$", ""))
+            except ValueError:
+                dw_goal = 0.0
+            config["dwolla"] = {
+                "enabled": True,
+                "key": dw_key,
+                "secret": dw_secret,
+                "environment": dw_env,
+                "monthly_volume_goal": dw_goal,
+            }
+        else:
+            config["dwolla"] = {"enabled": False}
+        print()
+    else:
+        config["dwolla"] = {"enabled": False}
+
     # --- Alerts ---
     config["alerts"] = {
         "payment_failures": True,
@@ -1509,7 +1789,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.9.5")
+    parser.add_argument("--version", action="version", version="Northstar 2.0.0")
 
     args = parser.parse_args()
 

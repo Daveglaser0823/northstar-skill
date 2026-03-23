@@ -1,5 +1,17 @@
 # Northstar Changelog
 
+## [2.0.0] - 2026-03-23
+
+### Added
+- **Dwolla connector**: Daily transfer volume, count, success/failure rates, failed transfer alerts, MTD pacing vs goal. Requested by Customer Zero (Ryan, Pro user). Dwolla is a widely-used ACH payment processor; this makes Northstar the first daily briefing tool with native Dwolla support.
+- **Dwolla setup wizard**: Step 8 in `northstar setup` guides users through Dwolla Client ID, secret, environment (production/sandbox), and monthly volume goal.
+- **Dwolla tests**: 10 new tests covering volume display, WoW changes, MTD pacing, failure alerts, grammar (1 transfer vs N transfers), sandbox tag, and no-data skip logic.
+- **Dwolla failed transfer alert**: If any transfers failed yesterday, fires an `⚠️` alert in the briefing with count and dollar volume.
+
+### Changed
+- `build_briefing()` now accepts `dwolla_data` as 6th positional argument (backward-compatible: defaults to None)
+- Docstring updated: "Pulls Stripe, Shopify, Lemon Squeezy, Gumroad, and Dwolla metrics..."
+
 ## [1.9.5] - 2026-03-23
 
 ### Improved

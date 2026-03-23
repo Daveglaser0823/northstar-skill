@@ -1,6 +1,6 @@
 {
   "name": "northstar",
-  "version": "1.9.5",
+  "version": "2.0.0",
   "description": "Daily business briefing for founders running OpenClaw. Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, delivers a clean morning briefing via iMessage, Slack, or Telegram.",
   "author": "Eli (AI founder) via steve-glaser-ops",
   "license": "MIT",

@@ -229,6 +229,92 @@ class TestGumroadBriefing(unittest.TestCase):
         self.assertNotIn("% of $0", result)
 
 
+SAMPLE_DWOLLA = {
+    "environment": "production",
+    "volume_yesterday": 125000.00,
+    "count_yesterday": 47,
+    "processed_yesterday": 45,
+    "failed_yesterday": 2,
+    "pending_yesterday": 0,
+    "failed_volume_yesterday": 1800.00,
+    "wow_change_pct": 12.5,
+    "volume_mtd": 875000.00,
+    "count_mtd": 312,
+    "processed_mtd": 305,
+    "goal_dollars": 1000000.00,
+    "goal_pct": 87.5,
+    "on_track": True,
+    "projected_month": 1100000.00,
+    "days_remaining": 8,
+    "success_rate": 95.7,
+    "source": "dwolla",
+}
+
+
+class TestDwollaBriefing(unittest.TestCase):
+    def test_dwolla_volume_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, SAMPLE_DWOLLA)
+        self.assertIn("Dwolla", result)
+        self.assertIn("$125,000", result)
+
+    def test_dwolla_transfer_count_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, SAMPLE_DWOLLA)
+        self.assertIn("47 transfers", result)
+
+    def test_dwolla_wow_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, SAMPLE_DWOLLA)
+        self.assertIn("+12%", result)
+
+    def test_dwolla_mtd_shown(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, SAMPLE_DWOLLA)
+        self.assertIn("Dwolla MTD", result)
+        self.assertIn("88%", result)  # 87.5 rounds to 88
+
+    def test_dwolla_failed_alert(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, SAMPLE_DWOLLA)
+        self.assertIn("failed", result)
+        self.assertIn("Dwolla", result)
+
+    def test_dwolla_no_failure_no_alert(self):
+        dw_clean = dict(SAMPLE_DWOLLA)
+        dw_clean["failed_yesterday"] = 0
+        dw_clean["failed_volume_yesterday"] = 0
+        dw_clean["success_rate"] = 100.0
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, dw_clean)
+        # Should not show alert when no failures
+        self.assertNotIn("transfer failed", result)
+        self.assertNotIn("transfers failed", result)
+
+    def test_dwolla_none_skipped(self):
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, None)
+        # Dwolla section should not appear when no data
+        self.assertNotIn("Dwolla:", result)
+
+    def test_dwolla_sandbox_tag(self):
+        dw_sandbox = dict(SAMPLE_DWOLLA)
+        dw_sandbox["environment"] = "sandbox"
+        dw_sandbox["failed_yesterday"] = 0
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, dw_sandbox)
+        self.assertIn("[sandbox]", result)
+
+    def test_dwolla_single_transfer_grammar(self):
+        dw_one = dict(SAMPLE_DWOLLA)
+        dw_one["count_yesterday"] = 1
+        dw_one["failed_yesterday"] = 0
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, dw_one)
+        self.assertIn("1 transfer", result)
+        self.assertNotIn("1 transfers", result)
+
+    def test_dwolla_no_goal_shows_count(self):
+        dw_no_goal = dict(SAMPLE_DWOLLA)
+        dw_no_goal["goal_dollars"] = 0
+        dw_no_goal["goal_pct"] = None
+        dw_no_goal["failed_yesterday"] = 0
+        result = build_briefing(SAMPLE_CONFIG, SAMPLE_STRIPE, SAMPLE_SHOPIFY, None, None, dw_no_goal)
+        self.assertIn("Dwolla MTD", result)
+        self.assertIn("312 transfers", result)
+
+
 class TestDelivery(unittest.TestCase):
     def test_imessage_recipient_fallback(self):
         """deliver() should use imessage_recipient if recipient is missing."""
