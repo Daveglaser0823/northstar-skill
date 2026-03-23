@@ -438,6 +438,42 @@ class TestActivateCommand(unittest.TestCase):
         self.assertIn("pro", output.lower())
 
 
+    def test_activate_revoked_key_rejected(self):
+        """Revoked keys (exposed publicly) should be rejected at activation."""
+        from northstar import cmd_activate
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with self.assertRaises(SystemExit) as cm:
+            with redirect_stdout(buf):
+                cmd_activate("NS-PRO-DTML-H6TK-SACG")
+        self.assertEqual(cm.exception.code, 1)
+        output = buf.getvalue()
+        self.assertIn("revoked", output.lower())
+
+    def test_report_requires_pro(self):
+        """northstar report should reject non-Pro configs."""
+        from northstar import cmd_report
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_report({"tier": "lite"})
+        output = buf.getvalue()
+        self.assertIn("Pro", output)
+
+    def test_report_requires_pro_standard_tier(self):
+        """northstar report should also reject standard tier."""
+        from northstar import cmd_report
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_report({"tier": "standard"})
+        output = buf.getvalue()
+        self.assertIn("Pro", output)
+
+
 # ---- Runner ----------------------------------------------------------------
 
 if __name__ == "__main__":

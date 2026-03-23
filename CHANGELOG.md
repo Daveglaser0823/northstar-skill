@@ -1,5 +1,19 @@
 # Northstar Changelog
 
+## [2.1.0] - 2026-03-23
+
+### Added
+- **`northstar report` command** (Pro only): Full drill-down report for all configured data sources. Shows expanded Stripe detail (yesterday, WoW, MTD, goal pacing, subscriber delta, payment issues, 7-day trend chart), Dwolla detail (environment, yesterday volume/count, WoW, processed/failed/pending breakdown, success rate, MTD, failed transfer alert), and Shopify detail. Requested by Customer Zero as "drill-down into the data."
+- **Key revocation system**: Revoked keys (e.g., keys accidentally exposed in public channels) now fail activation immediately with a clear error message. Revocation list lives in `cmd_activate()`.
+- **Private key delivery process doc**: `PRIVATE-KEY-DELIVERY.md` documents the correct key delivery flow (email only, never in public GitHub issues).
+
+### Fixed
+- Security: Revoked previously-exposed key `NS-PRO-DTML-H6TK-SACG` (was posted in a public GitHub issue, now blocked).
+
+### Tests
+- 3 new tests: revoked key rejection, `northstar report` requires Pro (lite tier), `northstar report` requires Pro (standard tier).
+- Total: 77 tests, all green.
+
 ## [2.0.0] - 2026-03-23
 
 ### Added

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 2.0.0
+Version: 2.1.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, Gumroad, and Dwolla metrics, formats a daily briefing,
@@ -1765,6 +1765,129 @@ def cmd_setup():
 
 # ---- CLI -------------------------------------------------------------------
 
+def cmd_report(config: dict):
+    """Detailed drill-down report for all configured data sources (Pro)."""
+    tier = config.get("tier", "lite")
+    if tier not in ("pro",):
+        print("northstar report requires Pro tier.")
+        print("Upgrade: https://polar.sh/daveglaser0823/northstar-pro")
+        return
+
+    now = datetime.now()
+    print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"  Northstar Detail Report - {now.strftime('%B %-d, %Y')}")
+    print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print()
+
+    # Stripe detail
+    if config.get("stripe", {}).get("enabled"):
+        api_key = config["stripe"].get("api_key", "")
+        if api_key and not api_key.startswith("sk_live_YOUR"):
+            print("STRIPE ─────────────────────────────────────────────")
+            currency = config["stripe"].get("currency", "usd")
+            goal = config["stripe"].get("monthly_revenue_goal", 0)
+
+            print("  Fetching Stripe data...", end=" ", flush=True)
+            d = fetch_stripe_metrics(api_key, float(goal), currency)
+            print("OK")
+
+            print(f"  Yesterday:      {fmt_currency(d['revenue_yesterday'])}")
+            wow = d.get("wow_change_pct")
+            if wow is not None:
+                print(f"  Week-over-week: {fmt_pct(wow)}")
+            print(f"  MTD revenue:    {fmt_currency(d['revenue_mtd'])}")
+            if d.get("goal_dollars"):
+                pct = d.get("goal_pct", 0)
+                days_left = (now.replace(day=1) + timedelta(days=32)).replace(day=1) - now
+                print(f"  Goal:           {fmt_currency(d['goal_dollars'])} ({pct:.1f}% reached, {days_left.days} days left)")
+            print()
+            print(f"  Active subs:    {d.get('active_subs', 0):,}")
+            new = d.get('new_subs', 0)
+            churned = d.get('churned_subs', 0)
+            if new or churned:
+                print(f"  Subscription δ: +{new} new / -{churned} churned")
+            failures = d.get("payment_failures", 0)
+            retries = d.get("retries_pending", 0)
+            if failures or retries:
+                print(f"  ⚠ Payment issues: {failures} failed, {retries} retrying")
+            else:
+                print(f"  Payment issues: none")
+
+            # 7-day trend (Pro module)
+            print()
+            print("  7-day trend:")
+            try:
+                pro = _load_pro()
+                trend = pro.fetch_7day_trend(api_key, currency)
+                for day_row in trend:
+                    bar = "█" * min(int(day_row["revenue_cents"] / 1000), 20)
+                    rev_str = fmt_currency(day_row["revenue_cents"] / 100)
+                    print(f"    {day_row['date']}  {rev_str:>10}  {bar}")
+            except Exception as e:
+                print(f"    (trend unavailable: {e})")
+            print()
+
+    # Dwolla detail
+    if config.get("dwolla", {}).get("enabled"):
+        dw_key = config["dwolla"].get("key", "")
+        dw_secret = config["dwolla"].get("secret", "")
+        if dw_key and not dw_key.startswith("YOUR_"):
+            print("DWOLLA ─────────────────────────────────────────────")
+            dw_env = config["dwolla"].get("environment", "production")
+            dw_goal = config["dwolla"].get("monthly_volume_goal", 0)
+
+            print("  Fetching Dwolla data...", end=" ", flush=True)
+            d = fetch_dwolla_metrics(dw_key, dw_secret, dw_env, float(dw_goal))
+            print("OK")
+
+            env_tag = " [sandbox]" if dw_env == "sandbox" else ""
+            print(f"  Environment:    {dw_env}{env_tag}")
+            print(f"  Yesterday vol:  {fmt_currency(d['volume_yesterday'])} ({d['count_yesterday']} transfers)")
+            wow = d.get("wow_change_pct")
+            if wow is not None:
+                print(f"  Week-over-week: {fmt_pct(wow)}")
+            print()
+            print(f"  Yesterday breakdown:")
+            print(f"    Processed: {d['processed_yesterday']}")
+            print(f"    Failed:    {d['failed_yesterday']}")
+            print(f"    Pending:   {d['pending_yesterday']}")
+            rate = d.get("success_rate", 100)
+            print(f"    Success %: {rate:.1f}%")
+            print()
+            print(f"  MTD volume:  {fmt_currency(d['volume_mtd'])} ({d['count_mtd']} transfers)")
+            if d.get("goal_pct") is not None:
+                print(f"  MTD goal:    {fmt_currency(d['goal_dollars'])} ({d['goal_pct']:.1f}% reached)")
+            if d.get("failed_yesterday", 0) > 0:
+                fail_vol = d.get("failed_volume_yesterday", 0)
+                print(f"  ⚠ Failed:  {d['failed_yesterday']} transfers ({fmt_currency(fail_vol)})")
+            print()
+
+    # Shopify detail
+    if config.get("shopify", {}).get("enabled"):
+        domain = config["shopify"].get("shop_domain", "")
+        token = config["shopify"].get("access_token", "")
+        if domain and token and not token.startswith("shpat_YOUR"):
+            print("SHOPIFY ────────────────────────────────────────────")
+            print("  Fetching Shopify data...", end=" ", flush=True)
+            d = fetch_shopify_metrics(domain, token)
+            print("OK")
+
+            print(f"  Orders fulfilled: {d.get('orders_fulfilled', 0)}")
+            print(f"  Orders open:      {d.get('orders_open', 0)}")
+            refunds = d.get("refunds_count", 0)
+            if refunds:
+                print(f"  Refunds:          {refunds} ({fmt_currency(d.get('refund_total', 0))})")
+            if d.get("top_product"):
+                print(f"  Top product:      {d['top_product']} ({d.get('top_product_units', 0)} units)")
+            print()
+
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"  northstar run   -- deliver summary briefing")
+    print(f"  northstar trend -- 7-day trend chart (Stripe)")
+    print(f"  northstar digest -- weekly rollup (Pro)")
+    print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Northstar - Daily Business Briefing",
@@ -1779,6 +1902,7 @@ Commands:
   status    Show config and last run info
   stripe    Show raw Stripe data (debug)
   shopify   Show raw Shopify data (debug)
+  report    [Pro] Full drill-down report for all data sources
   digest    [Pro] Run weekly digest (7-day rollup, Sunday format)
   trend     [Pro] Show 7-day revenue trend sparkline
 
@@ -1789,18 +1913,19 @@ Examples:
   northstar run
   northstar test
   northstar status
+  northstar report                        # Pro tier only - full drill-down
   northstar digest                        # Pro tier only
   northstar trend                         # Pro tier only
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend", "demo", "setup", "activate"],
+                        choices=["run", "test", "status", "stripe", "shopify", "report", "digest", "trend", "demo", "setup", "activate"],
                         help="Command to run (default: run)")
     parser.add_argument("license_key", nargs="?", default=None,
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 2.0.0")
+    parser.add_argument("--version", action="version", version="Northstar 2.1.0")
 
     args = parser.parse_args()
 
@@ -1838,6 +1963,8 @@ Examples:
         cmd_stripe(config)
     elif args.command == "shopify":
         cmd_shopify(config)
+    elif args.command == "report":
+        cmd_report(config)
     elif args.command == "digest":
         cmd_digest(config, dry_run=False)
     elif args.command == "trend":
