@@ -29,7 +29,42 @@ This will:
 
 ---
 
-## Step 2: Configure Your Credentials
+## Step 2: Try the Demo (Optional but Recommended)
+
+See a realistic sample briefing before entering any credentials:
+
+```bash
+northstar demo
+```
+
+No config needed. Just shows you what the output looks like.
+
+---
+
+## Step 3: Run the Setup Wizard
+
+The fastest way to configure Northstar (no JSON editing required):
+
+```bash
+northstar setup
+```
+
+This walks you through:
+- Choosing your tier (lite / standard / pro)
+- Selecting your delivery channel (iMessage, Slack, Telegram)
+- Entering your Stripe API key
+- Setting your monthly revenue goal
+- Configuring your delivery schedule
+
+At the end it writes your config file and runs a test to verify everything works. **Estimated time: 4-5 minutes.**
+
+> **Prefer manual config?** Skip to [Manual Configuration](#manual-configuration) below.
+
+---
+
+## Manual Configuration
+
+### Configure Your Credentials
 
 Open the config file:
 
@@ -74,7 +109,7 @@ nano ~/.clawd/skills/northstar/config/northstar.json
 
 ---
 
-## Step 3: Get Your Stripe API Key
+### Get Your Stripe API Key
 
 1. Go to [Stripe Dashboard > API Keys](https://dashboard.stripe.com/apikeys)
 2. Click **+ Create restricted key**
