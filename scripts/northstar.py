@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.9.4
+Version: 1.9.5
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
@@ -810,7 +810,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v1.9.4 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.9.5 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -1133,9 +1133,9 @@ def cmd_demo():
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print()
     print("Ready to see your real numbers?")
-    print("  1. Open your config:  nano ~/.clawd/skills/northstar/config/northstar.json")
-    print("  2. Add your Stripe key and phone number")
-    print("  3. Run:               northstar test")
+    print("  1. Run:  northstar setup  (interactive wizard, ~3 minutes)")
+    print("  2. Run:  northstar test   (dry-run with your real data)")
+    print("  3. Run:  northstar run    (live delivery to iMessage / Slack / Telegram)")
     print()
     print("Docs: https://github.com/Daveglaser0823/northstar-skill/blob/main/INSTALL.md")
     print()
@@ -1509,7 +1509,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.9.4")
+    parser.add_argument("--version", action="version", version="Northstar 1.9.5")
 
     args = parser.parse_args()
 

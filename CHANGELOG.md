@@ -1,5 +1,10 @@
 # Northstar Changelog
 
+## [1.9.5] - 2026-03-23
+
+### Improved
+- `northstar demo` footer now points to `northstar setup` (interactive wizard) instead of manual JSON config editing. Removes the biggest friction point for new users.
+
 ## [1.9.4] - 2026-03-23
 
 ### Added
