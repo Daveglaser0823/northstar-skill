@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.5.0
+Version: 1.7.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
@@ -1355,7 +1355,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.6.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.7.0")
 
     args = parser.parse_args()
 

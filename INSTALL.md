@@ -371,7 +371,7 @@ Northstar is available in three tiers:
 | **Standard** | $19/month | Stripe + Shopify, all delivery channels, scheduled runs |
 | **Pro** | $49/month | Everything in Standard plus weekly digest, 7-day sparkline, multi-channel, custom metrics |
 
-**To subscribe:** Purchase on [ClawHub](https://clawhub.com/skills/northstar). After checkout, ClawHub sets your tier automatically in your config file. You can also set it manually by editing your config:
+**To subscribe:** Open a GitHub issue to request a license key: [Standard ($19/month)](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard) or [Pro ($49/month)](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Pro). You receive a license key within 24 hours. Activate with `northstar activate <key>`. You can also set the tier manually by editing your config:
 
 ```json
 {

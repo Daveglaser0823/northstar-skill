@@ -1,5 +1,13 @@
 # Northstar Changelog
 
+## [1.7.0] - 2026-03-23
+
+### Fixed
+- **Critical pre-launch fix:** `northstar.run` domain is owned by a third party (unrelated site). Replaced all payment links with GitHub Issues purchase flow. Users open a GitHub issue to request a license key; key is sent within 24 hours. Affects `northstar activate` prompt, `northstar status` upgrade prompt, and `PAYMENT.md`.
+- Test updated to verify new purchase URL format.
+
+---
+
 ## [1.6.0] - 2026-03-23
 
 ### Added
