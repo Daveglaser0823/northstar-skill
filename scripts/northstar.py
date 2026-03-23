@@ -1199,6 +1199,17 @@ def cmd_activate(license_key: str):
 
     key = license_key.strip()
 
+    # --- Revoked keys (invalidated due to security rotation) ---
+    # Keys here are rejected immediately regardless of format.
+    REVOKED_KEYS = {
+        "NS-PRO-DTML-H6TK-SACG",  # Ryan rcraig14 - rotated 2026-03-23 (key exposed in public GitHub issue)
+    }
+    if key.upper() in {k.upper() for k in REVOKED_KEYS}:
+        print("Error: This license key has been revoked and is no longer valid.")
+        print("If you are the original licensee, please contact support to receive your replacement key.")
+        print("Support: https://github.com/Daveglaser0823/northstar-skill/issues")
+        sys.exit(1)
+
     # Detect tier from key prefix (NSS- = standard, NSP- = pro, legacy NS-STD- / NS-PRO- supported)
     key_upper = key.upper()
     tier = None
