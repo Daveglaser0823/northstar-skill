@@ -33,6 +33,7 @@ Next: 6 days left in month, on track.
 
 ```bash
 clawhub install northstar
+northstar demo    # See a sample briefing immediately - no config needed
 ```
 
 ### 2. Configure your credentials
@@ -134,6 +135,7 @@ Set `monthly_revenue_goal` to your MRR target **in dollars** (e.g., `24900` = $2
 
 | Command | Description |
 |---------|-------------|
+| `northstar demo` | **Start here.** Sample briefing with demo data -- no config needed |
 | `northstar run` | Run briefing now, send to configured channel |
 | `northstar test` | Dry-run - print briefing to terminal, no message sent |
 | `northstar status` | Show config status and last run info |

@@ -450,7 +450,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     stripe_data = None
     shopify_data = None
 
-    print(f"Northstar v1.1.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.2.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -541,6 +541,61 @@ def cmd_shopify(config: dict):
     print(json.dumps(data, indent=2))
 
 
+def cmd_demo():
+    """Show a sample briefing with demo data. No config needed."""
+    from datetime import date
+    print()
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("  Northstar Demo - Sample Briefing")
+    print("  (no API keys required)")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print()
+
+    demo_config = {
+        "delivery": {"channel": "none"},
+        "stripe": {"enabled": True, "monthly_revenue_goal": 24900},
+        "shopify": {"enabled": True},
+        "alerts": {"payment_failures": True, "churn_threshold": 3, "large_refund_threshold": 100},
+        "format": {"emoji": True, "include_pacing": True, "include_shopify_detail": True},
+    }
+    demo_stripe = {
+        "revenue_yesterday": 1247.50,
+        "revenue_last_week_same_day": 1113.84,
+        "wow_change_pct": 12.0,
+        "revenue_mtd": 18430.00,
+        "goal_dollars": 24900.0,
+        "goal_pct": 74.0,
+        "days_remaining": 6,
+        "on_track": True,
+        "projected_month": 25200.0,
+        "active_subs": 342,
+        "new_subs": 3,
+        "churned_subs": 1,
+        "payment_failures": 0,
+        "retries_pending": 2,
+    }
+    demo_shopify = {
+        "orders_fulfilled": 23,
+        "orders_open": 8,
+        "refunds_count": 1,
+        "refund_total": 47.00,
+        "top_product": "Growth Plan - Annual",
+        "top_product_units": 7,
+    }
+    briefing = build_briefing(demo_config, demo_stripe, demo_shopify)
+    print(briefing)
+    print()
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print()
+    print("Ready to see your real numbers?")
+    print("  1. Open your config:  nano ~/.clawd/skills/northstar/config/northstar.json")
+    print("  2. Add your Stripe key and phone number")
+    print("  3. Run:               northstar test")
+    print()
+    print("Docs: https://github.com/Daveglaser0823/northstar-skill/blob/main/INSTALL.md")
+    print()
+
+
 def cmd_digest(config: dict, dry_run: bool = False):
     """Run weekly digest (Pro only)."""
     pro = _load_pro()
@@ -560,6 +615,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:
+  demo      Show a sample briefing with demo data (no config needed)
   run       Run briefing and deliver to configured channel
   test      Dry-run - print briefing to terminal only
   status    Show config and last run info
@@ -569,6 +625,7 @@ Commands:
   trend     [Pro] Show 7-day revenue trend sparkline
 
 Examples:
+  northstar demo            # Try it first - no config needed
   northstar run
   northstar test
   northstar status
@@ -577,13 +634,18 @@ Examples:
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend"],
+                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend", "demo"],
                         help="Command to run (default: run)")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.1.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.2.0")
 
     args = parser.parse_args()
+
+    # Demo doesn't need config
+    if args.command == "demo":
+        cmd_demo()
+        return
 
     # Load config
     try:

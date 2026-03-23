@@ -32,6 +32,12 @@ Next: 6 days left in month, on track.
 
 ```bash
 clawhub install northstar
+northstar demo             # See a sample briefing immediately - no config needed
+```
+
+Then connect your real accounts:
+
+```bash
 cp ~/.clawd/skills/northstar/config/northstar.json.example ~/.clawd/skills/northstar/config/northstar.json
 # Edit northstar.json with your API keys
 northstar test

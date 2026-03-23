@@ -5,6 +5,18 @@ Format: [Version] - Date - Summary
 
 ---
 
+## [1.2.0] - 2026-03-22
+
+### Added
+- **`northstar demo` command**: Zero-config onboarding. Run immediately after install to see a realistic sample briefing with demo Stripe + Shopify data -- no API keys, no config file required. Includes next-step prompt guiding users to configure their real credentials.
+- Demo command intentionally skips config loading (safe for fresh installs)
+
+### Changed
+- Version string updated to 1.2.0 in `northstar.py` and `clawhub.json`
+- CLI help text updated to list `demo` as the recommended first command
+
+---
+
 ## [1.1.0] - 2026-03-22
 
 ### Added
