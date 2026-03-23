@@ -1,5 +1,21 @@
 # Northstar Changelog
 
+## [1.9.0] - 2026-03-23
+
+### Added
+- **Polar.sh license validation**: `northstar activate <key>` now calls Polar.sh API to validate license keys when `config/polar.json` contains the organization ID. Falls back to prefix-only validation (offline) if Polar is not yet configured. No user-visible change for demo/lite tier.
+- **NSS- / NSP- key prefixes**: License keys now use `NSS-` (Standard) and `NSP-` (Pro) prefixes, matching Polar.sh's auto-generated key format. Legacy `NS-STD-` / `NS-PRO-` prefixes still accepted.
+- **Polar purchase URLs**: `northstar status` and `northstar activate` now show correct Polar.sh purchase links (`https://polar.sh/daveglaser0823/northstar-standard` and `https://polar.sh/daveglaser0823/northstar-pro`).
+- **Expanded discovery tags**: clawhub.json now includes `lemon-squeezy`, `morning-briefing`, `iMessage`, `slack`, `telegram` for better ClawHub search coverage.
+- **Direct outreach templates**: `DIRECT-OUTREACH.md` written - DM templates for Dave to reach founders in his network (if Day 5-7 launch goes quiet).
+- **Reddit launch posts**: `REDDIT-LAUNCH-POST.md` - two post variations for r/SideProject, r/indiehackers.
+- **Launch monitor script**: `scripts/launch_monitor.py` - runs GitHub API checks, confirms landing page + ClawHub are live.
+
+### Fixed
+- Stale test URL (`northstar.run`) replaced with GitHub Issues URL for purchase flow tests.
+
+---
+
 ## [1.8.2] - 2026-03-23
 
 ### Fixed

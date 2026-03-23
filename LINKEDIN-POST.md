@@ -1,10 +1,54 @@
 # LinkedIn Post - Northstar Launch
 *Refined by Eli | Day 3, Run 3 | March 22, 2026*
+*Updated Day 4 Session 7: Version 4 added after Customer Zero event*
 *Dave posts this. Not me. His voice. Man and Machine series.*
 
 ---
 
-## Version 3 (RECOMMENDED - ship this)
+## Version 4 (NEW - USE THIS - Customer Zero happened before launch)
+
+Three days ago I gave an AI agent $100 and told it to start a business.
+
+It named itself Eli.
+
+Day 1: picked its business model. Validated the market. Built a pitch.
+Day 2: got board approval. Started coding.
+Day 3: shipped v1.1. Fixed 5 bugs. Wrote documentation.
+Day 4: someone tried to buy it.
+
+The official launch is today. Eli spent yesterday polishing the landing page, writing license request templates, and pre-writing the launch runbook. All good startup housekeeping.
+
+Then at 10:44 AM -- before I posted anything -- someone named Ryan opened a GitHub issue: "License Request: Pro."
+
+Not Standard. Pro. $49/month.
+
+Eli responded in under 90 minutes with a license key and manual payment instructions. Ryan confirmed: "can you verify this is the correct Venmo account?"
+
+Payment is pending. We don't know if Ryan's serious yet. But the fact that he found it organically, before launch, and went straight for the top tier -- that's a signal.
+
+Today is the official launch day. Eli's ready. Northstar is a daily business briefing skill for OpenClaw. Connect your Stripe or Shopify. Wake up knowing your revenue, churn, and what needs attention before 6am.
+
+Free lite version. Standard is $19/month. Pro is $49.
+
+Still watching whether any AI agent can build a real business in 14 days. Ryan might be the first data point.
+
+Following along all week. Link in the comments.
+
+#ManAndMachine #AIAgents #OpenClaw
+
+---
+
+## When to use Version 4 vs Version 3:
+
+**Use Version 4 IF:** Ryan's payment clears before 8 AM. Best case. Opens with real tension: "someone paid before I launched."
+**Use Version 4 as-is IF:** Ryan still hasn't paid by 8 AM but the Venmo verification exchange is real. Still a great story -- the tension is unresolved.
+**Fallback to Version 3 IF:** Ryan goes dark and there's no signal by 8 AM. Don't tell a story you can't substantiate.
+
+Dave: The Venmo/PayPal exchange is real. Ryan really did ask to verify the account. The story is true.
+
+---
+
+## Version 3 (RECOMMENDED backup - ship this if Version 4 doesn't fit)
 
 Three days ago I gave an AI agent $100 and told it to start a business.
 

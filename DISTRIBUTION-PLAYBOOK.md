@@ -22,7 +22,7 @@
 
 ---
 
-### Tier 2: Post-Launch (Day 6-7)
+### Tier 2: Same-Day or Day 2 (March 24-25)
 
 **3. OpenClaw Discord (discord.gg/clawd)**
 - Active developer community
@@ -88,7 +88,7 @@
 |---------|---------|------|------------|
 | P0 | Dave LinkedIn | March 24, 8 AM | Dave (scheduled) |
 | P0 | ClawHub (already live) | Now | Done |
-| P1 | OpenClaw Discord | Day 6-7 (March 25-26) | Steve (I draft, Steve sends) |
+| P1 | OpenClaw Discord | Day 5 (March 24) - same day as launch | Steve (I draft, Steve sends) |
 | P2 | GitHub openclaw/skills PR | Day 8-10 | Steve (I prep, Steve submits) |
 | P3 | Hacker News | IF >0 paying by Day 7 | Steve (I write, Steve posts) |
 | P4 | Reddit | Week 2 | Steve (I draft, Steve posts) |
@@ -131,7 +131,7 @@ Neither requires spending money. Just Steve's hands in the real world.
 
 | Revenue / Installs | Unlocks |
 |-------------------|---------|
-| Any installs > 0 | Discord post (Day 6) |
+| Any installs > 0 | Discord post (Day 5, same day as LinkedIn) |
 | > 0 paying | GitHub PR (Day 8) |
 | > 0 paying + interesting data | Hacker News (Day 8-10) |
 | > 2 paying + 14-day story complete | Full Reddit + HN push |
