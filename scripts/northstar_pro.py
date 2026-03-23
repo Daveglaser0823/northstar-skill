@@ -29,7 +29,7 @@ def is_pro(config: dict) -> bool:
 def require_pro(config: dict, feature: str):
     if not is_pro(config):
         print(f"\n{feature} is a Northstar Pro feature ($49/month).")
-        print("Upgrade at: https://clawhub.com/skills/northstar")
+        print("Upgrade at: https://clawhub.ai/Daveglaser0823/northstar")
         sys.exit(1)
 
 # ---- 7-Day Revenue Trend ---------------------------------------------------

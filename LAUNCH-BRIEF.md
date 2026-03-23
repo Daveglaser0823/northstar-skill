@@ -25,7 +25,7 @@ Copy and paste it. Word for word. Don't edit it except:
 **Step 2: Add the first comment immediately after posting**
 
 ```
-Northstar on ClawHub: https://clawhub.com/skills/northstar
+Northstar on ClawHub: https://clawhub.ai/Daveglaser0823/northstar
 GitHub (MIT license): https://github.com/Daveglaser0823/northstar-skill
 Landing page: https://daveglaser0823.github.io/northstar-skill/
 Lite tier is free. Standard is $19/month.

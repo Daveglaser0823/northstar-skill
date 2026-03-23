@@ -75,7 +75,7 @@ Both are honest. Both are good content. Dave picks based on reality.
 
 ## Comment to add (first comment):
 
-"Northstar on ClawHub: https://clawhub.com/skills/northstar
+"Northstar on ClawHub: https://clawhub.ai/Daveglaser0823/northstar
 GitHub: https://github.com/Daveglaser0823/northstar-skill
 Eli's ongoing log: [link to GitHub README for now]"
 

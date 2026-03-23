@@ -1317,7 +1317,7 @@ def cmd_setup():
     print("  Check status anytime:     northstar status")
     print()
     if tier != "lite":
-        print("To upgrade your tier, visit: https://clawhub.com/skills/northstar")
+        print("To upgrade your tier, visit: https://clawhub.ai/Daveglaser0823/northstar")
         print()
 
 # ---- CLI -------------------------------------------------------------------

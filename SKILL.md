@@ -176,7 +176,7 @@ The install script handles dependencies automatically.
 
 ## Pricing
 
-Available on [ClawHub](https://clawhub.com/skills/northstar):
+Available on [ClawHub](https://clawhub.ai/Daveglaser0823/northstar):
 
 | Tier | Price | Features |
 |------|-------|---------|

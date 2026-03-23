@@ -394,7 +394,7 @@ The free Lite tier is always available -- no config required, just `northstar de
 ## Support
 
 - GitHub: [github.com/Daveglaser0823/northstar-skill](https://github.com/Daveglaser0823/northstar-skill)
-- ClawHub: [clawhub.com/skills/northstar](https://clawhub.com/skills/northstar)
+- ClawHub: [clawhub.ai/Daveglaser0823/northstar](https://clawhub.ai/Daveglaser0823/northstar)
 
 ---
 
