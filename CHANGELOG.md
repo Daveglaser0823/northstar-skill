@@ -1,5 +1,14 @@
 # Northstar Changelog
 
+## [1.8.0] - 2026-03-23
+
+### Added
+- **GitHub Issue Templates**: Structured templates for license requests (Standard, Pro), bug reports, and feature requests. Users clicking "Get Standard" or "Get Pro" now get pre-filled issue forms with all required info.
+- **Landing page pricing CTAs**: Added "Install Free", "Get Standard", and "Get Pro" buttons to the pricing section on the landing page. Each links to the appropriate GitHub issue template.
+- **Landing page version bump**: Footer now correctly shows v1.7.0 (was stuck at v1.5.0).
+
+---
+
 ## [1.7.0] - 2026-03-23
 
 ### Fixed

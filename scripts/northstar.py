@@ -1355,7 +1355,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.7.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.8.0")
 
     args = parser.parse_args()
 
