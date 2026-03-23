@@ -42,12 +42,22 @@ The `setup` wizard walks you through tier selection, delivery channel, credentia
 
 See [INSTALL.md](INSTALL.md) for the full guide, or [SKILL.md](SKILL.md) for technical documentation.
 
+## Data Sources
+
+| Source | Notes |
+|--------|-------|
+| Stripe | Revenue, subscriptions, churn, payment failures |
+| Lemon Squeezy | Revenue, subscriptions, payment status (optional) |
+| Shopify | Orders, refunds, top products (optional) |
+
+Connect one or all three. Briefing combines everything into one daily message.
+
 ## Pricing
 
 | Tier | Price | Features |
 |------|-------|---------|
 | Lite | Free | Stripe only, terminal output |
-| Standard | $19/month | Stripe + Shopify, all channels, scheduled |
+| Standard | $19/month | Stripe + Shopify + Lemon Squeezy, all channels, scheduled |
 | Pro | $49/month | Multi-channel, custom metrics, weekly digest |
 
 Available on [ClawHub](https://clawhub.com).

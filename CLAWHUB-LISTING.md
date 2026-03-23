@@ -11,7 +11,7 @@ northstar
 Daily business briefing for founders. Revenue, churn, orders. In your inbox by 6am.
 
 ## Short Description (ClawHub search result snippet, 150 chars)
-Wake up knowing. Northstar pulls your Stripe + Shopify metrics every morning and delivers a clean briefing via iMessage, Slack, or Telegram.
+Wake up knowing. Northstar pulls Stripe, Shopify, and Lemon Squeezy metrics and delivers a clean morning briefing via iMessage, Slack, or Telegram.
 
 ## Long Description (ClawHub listing page)
 
@@ -23,7 +23,7 @@ Stripe. Shopify. Slack. Back to Stripe to check that churn number. 20-35 minutes
 
 Northstar ends that.
 
-Every morning at 6am, your OpenClaw agent pulls your Stripe and Shopify data, calculates what matters (revenue, new subscribers, churn, payment failures, orders, refunds, month-to-date pacing), and delivers one clean briefing to wherever you want it.
+Every morning at 6am, your OpenClaw agent pulls your Stripe, Shopify, and Lemon Squeezy data, calculates what matters (revenue, new subscribers, churn, payment failures, orders, refunds, month-to-date pacing), and delivers one clean briefing to wherever you want it.
 
 You wake up knowing. One glance. Done.
 
@@ -42,13 +42,14 @@ Next: 6 days left in month, on track.
 
 **What it does:**
 - Pulls yesterday's Stripe revenue, new subs, churn, MRR, payment failures
-- Pulls Shopify orders, open orders, refunds, top products
+- Pulls Lemon Squeezy revenue, subscriptions, and payment status (optional)
+- Pulls Shopify orders, open orders, refunds, top products (optional)
 - Calculates week-over-week and month-to-date metrics
 - Flags anomalies that need your attention
 - Delivers via iMessage, Slack, or Telegram (your choice)
 - Runs on your schedule (default 6am, fully configurable)
 
-**Setup takes 10 minutes.** You need your Stripe API key. Shopify is optional. Everything else is config.
+**Setup takes 4-5 minutes** with the interactive wizard (`northstar setup`). You need at least one data source (Stripe or Lemon Squeezy). Shopify is optional. Everything else is config.
 
 ---
 
