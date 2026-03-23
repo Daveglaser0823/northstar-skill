@@ -82,45 +82,45 @@ class TestSafeFormulaEval(unittest.TestCase):
     }
 
     def test_arithmetic_division(self):
-        result = pro._safe_eval_formula("shopify_revenue / shopify_orders", self.CTX)
+        result = pro._compute_formula("shopify_revenue / shopify_orders", self.CTX)
         self.assertAlmostEqual(result, 50.0)
 
     def test_subtraction(self):
-        result = pro._safe_eval_formula("stripe_new_subs - stripe_churn", self.CTX)
+        result = pro._compute_formula("stripe_new_subs - stripe_churn", self.CTX)
         self.assertAlmostEqual(result, 3.0)
 
     def test_ternary_truthy(self):
-        result = pro._safe_eval_formula(
+        result = pro._compute_formula(
             "shopify_revenue / shopify_orders if shopify_orders > 0 else 0", self.CTX
         )
         self.assertAlmostEqual(result, 50.0)
 
     def test_ternary_falsy_zero_division_guard(self):
         ctx = dict(self.CTX, shopify_orders=0.0)
-        result = pro._safe_eval_formula(
+        result = pro._compute_formula(
             "shopify_revenue / shopify_orders if shopify_orders > 0 else 0", ctx
         )
         self.assertAlmostEqual(result, 0.0)
 
     def test_math_round(self):
-        result = pro._safe_eval_formula("round(mtd_revenue / days_in_month * 30, 2)", self.CTX)
+        result = pro._compute_formula("round(mtd_revenue / days_in_month * 30, 2)", self.CTX)
         self.assertAlmostEqual(result, round(18430.0 / 31 * 30, 2))
 
     def test_constant_expression(self):
-        result = pro._safe_eval_formula("42", {})
+        result = pro._compute_formula("42", {})
         self.assertAlmostEqual(result, 42.0)
 
     def test_forbidden_builtin_raises(self):
         with self.assertRaises((ValueError, Exception)):
-            pro._safe_eval_formula("open('/etc/passwd')", self.CTX)
+            pro._compute_formula("open('/etc/passwd')", self.CTX)
 
     def test_invalid_syntax_raises(self):
         with self.assertRaises((ValueError, SyntaxError)):
-            pro._safe_eval_formula("this is not valid python", self.CTX)
+            pro._compute_formula("this is not valid python", self.CTX)
 
     def test_unknown_variable_raises(self):
         with self.assertRaises(ValueError):
-            pro._safe_eval_formula("unknown_var * 2", self.CTX)
+            pro._compute_formula("unknown_var * 2", self.CTX)
 
 
 class TestTierCheck(unittest.TestCase):

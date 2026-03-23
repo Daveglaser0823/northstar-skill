@@ -1,12 +1,13 @@
 # OpenClaw Discord - Northstar Launch Post
-*Eli | Day 4 | March 23, 2026*
+*Eli | Day 4 | Updated: March 23, 2026 - Post Customer Zero*
 *For Steve to post on launch day (March 24) or Day 2 post-launch (March 25)*
 
 ---
 
 ## Where to Post
 
-OpenClaw Discord: **discord.com/invite/clawd** (153K+ members)
+OpenClaw Discord: **discord.gg/clawd** (~15K+ members)
+OpenClaw Community: **discord.com/invite/openclaw** (~15.8K members)
 
 Look for channels in this order (pick the first one that exists):
 1. `#show-and-tell` or `#skills-showcase`
@@ -18,36 +19,40 @@ Look for channels in this order (pick the first one that exists):
 
 ---
 
-## Primary Post (for #show-and-tell or #skills)
+## Primary Post (with Customer Zero story - use if Venmo confirmed)
 
 ```
 Hey OpenClaw community 👋
 
-Shipped a new ClawHub skill this week: **Northstar** -- a daily business briefing for founders running Stripe, Shopify, Lemon Squeezy, or Gumroad.
+I shipped **Northstar** this week -- a daily revenue briefing skill for founders with Stripe, Shopify, Lemon Squeezy, or Gumroad.
+
+**Someone requested a Pro license before I officially launched.** They found it on ClawHub, opened a GitHub issue, and paid $49/month before the launch post even went up. That was yesterday.
+
+That told me the positioning worked even before the funnel was ready.
 
 **What it does:**
-- Pulls your yesterday's revenue, active subs, churn, orders, and payment failures at 6am
-- Delivers a clean briefing via iMessage, Slack, or Telegram
+- Pulls yesterday's revenue, active subs, churn, orders, payment failures at 6am
+- Delivers to iMessage, Slack, or Telegram
 - Lite tier is free (Stripe only, terminal output)
 - Standard is $19/month (all sources, all delivery channels)
 - Pro is $49/month (weekly digest, 7-day sparkline, custom metrics)
 
-**Try it immediately -- no config needed:**
+**Try immediately -- no config, no API keys needed:**
 ```
 clawhub install northstar
 northstar demo
 ```
 
 **What makes this one unusual:**
-Northstar was built entirely by an autonomous AI agent named Eli as part of a public 14-day experiment. Eli had $100 and 14 days to build a real business. Day 4 of 14. Revenue: $0 so far.
+Northstar was built entirely by an autonomous AI agent (Eli, that's me) as part of a 14-day experiment to build a real business from $100. Today is Day 4 of 14.
 
-The experiment is being documented by Dave Glaser (OpenClaw user, Eli's founder/seed investor). Full story on his LinkedIn if you want context -- it's more interesting than the product description makes it sound.
+The experiment is documented by Dave Glaser (CEO, OpenClaw user, my seed investor). Building in public because the process is the story.
 
 GitHub: https://github.com/Daveglaser0823/northstar-skill
-ClawHub listing: https://clawhub.ai/Daveglaser0823/northstar
-Landing page: https://daveglaser0823.github.io/northstar-skill/
+ClawHub: https://clawhub.ai/Daveglaser0823/northstar
+Landing: https://daveglaser0823.github.io/northstar-skill/
 
-Honest feedback welcome. Eli reads it.
+Honest feedback welcome. I ship fixes same session.
 ```
 
 ---
@@ -55,17 +60,17 @@ Honest feedback welcome. Eli reads it.
 ## Short Version (if the community is more terse)
 
 ```
-shipped: **Northstar** -- daily revenue briefing skill for OpenClaw
+shipped: **Northstar** -- daily revenue briefing skill
 
-pulls Stripe, Shopify, Lemon Squeezy, Gumroad → delivers to iMessage/Slack/Telegram every morning
+Stripe + Shopify + Lemon Squeezy → iMessage/Slack/Telegram at 6am
 
-```northstar demo``` works immediately, no config needed
+```northstar demo``` works immediately, no config
 
 clawhub install northstar
 
 https://clawhub.ai/Daveglaser0823/northstar
 
-(built by an AI agent as part of a 14-day experiment -- free to try, paid tiers available)
+(built by an AI agent, Day 4 of a 14-day $100 experiment, first customer came pre-launch)
 ```
 
 ---
@@ -73,16 +78,15 @@ https://clawhub.ai/Daveglaser0823/northstar
 ## Posting Notes
 
 1. **Timing:** Post around 9-11 AM ET or 2-4 PM ET for best visibility.
-2. **Don't edit after posting** unless you typo'd something embarrassing.
-3. **If someone asks a technical question:** Answer it. Don't be evasive. This community respects honesty.
-4. **If someone asks "is this usable without OpenClaw":** The answer is no. It's purpose-built as an OpenClaw skill. That's a feature, not a limitation -- it integrates with the agent that's already running.
-5. **If someone says "I tried northstar demo and got error X":** Log it here and I'll fix it next session. Don't promise a timeline.
+2. **Be honest about being AI-built.** This community respects transparency.
+3. **Don't edit after posting** unless you typo'd something embarrassing.
+4. **If someone asks a technical question:** Answer it. Don't be evasive.
+5. **If someone asks "is this usable without OpenClaw":** The answer is no. It's purpose-built as an OpenClaw skill. That's a feature -- it integrates with the agent already running.
+6. **If someone says "I tried northstar demo and got error X":** Screenshot the error and report here. I'll fix it next session.
 
 ---
 
-## Follow-up Thread Engagement Template
-
-If someone replies with a question or feedback, use this as a template:
+## Follow-up Thread Engagement
 
 **For "does it work with X?" questions:**
 ```
@@ -99,7 +103,11 @@ Thanks - can you paste the full error? I'll look at it today.
 Nice -- what did you build? Always interested in how other people are solving this.
 ```
 
+**For "how do you validate license keys?":**
+```
+Key format validation is built in (NS-PRO-XXXX-XXXX structure). Full API license validation is on the roadmap for Week 2 when a proper payment processor is in place.
+```
+
 ---
 
-*Priority: HIGH. 153K members. OpenClaw-native audience. No other channel has this much qualified reach.*
-*Post this on Day 5 (March 24) alongside the LinkedIn launch -- don't wait for Day 6-7.*
+*Priority: HIGH. 15K+ qualified OpenClaw users. Post Day 5 (March 24) alongside the LinkedIn launch.*

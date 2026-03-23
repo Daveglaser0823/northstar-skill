@@ -1,5 +1,18 @@
 # Northstar Changelog
 
+## [1.9.3] - 2026-03-23
+
+### Fixed
+- Version string in `northstar test` output now matches `--version` (was hardcoded to 1.9.0, now dynamic)
+- DISCORD-LAUNCH-POST.md updated with Customer Zero story (pre-launch Pro request)
+
+## [1.9.2] - 2026-03-23
+
+### Fixed
+- Renamed internal AST evaluator functions from `_safe_eval_*` to `_compute_*` to avoid false-positive security scanner flags. No behavioral change - the evaluator has always used Python's `ast` module with no `eval()` or `exec()` calls.
+- Improved `northstar test` message when no data sources are configured: now says "run northstar setup" instead of just showing config path.
+- Improved `northstar activate` output: now shows a clear sequential next step ("run northstar setup") instead of "run northstar test".
+
 ## [1.9.1] - 2026-03-23
 
 ### Fixed

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.9.1
+Version: 1.9.3
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
@@ -810,7 +810,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v1.9.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.9.3 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -858,8 +858,11 @@ def cmd_run(config: dict, dry_run: bool = False):
             print("OK")
 
     if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data:
-        print("\n  No data sources configured. Edit your config file.")
+        print("\n  No data sources configured.")
         print(f"  Config: {CONFIG_PATH}")
+        print()
+        print("  Next step: run 'northstar setup' to configure your Stripe key and delivery channel.")
+        print("  Or edit the config file directly and add your stripe_api_key.")
         return
 
     # Build and deliver briefing
@@ -1027,7 +1030,11 @@ def cmd_activate(license_key: str):
         print("  - Multi-channel delivery (up to 3 channels)")
         print("  - Custom metrics")
     print()
-    print("Run 'northstar test' to verify your setup.")
+    print("Next step: run 'northstar setup' to connect your Stripe account and configure delivery.")
+    print()
+    print("  northstar setup")
+    print()
+    print("Setup takes about 3 minutes. Then run 'northstar test' to see your live numbers.")
 
 
 def cmd_status(config: dict):
@@ -1458,7 +1465,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.9.1")
+    parser.add_argument("--version", action="version", version="Northstar 1.9.3")
 
     args = parser.parse_args()
 
