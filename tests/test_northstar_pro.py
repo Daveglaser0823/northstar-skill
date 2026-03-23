@@ -68,6 +68,61 @@ SAMPLE_TREND = [
 
 # ---- Tests -----------------------------------------------------------------
 
+class TestSafeFormulaEval(unittest.TestCase):
+    """Tests for the AST-based safe formula evaluator (no eval/exec)."""
+    CTX = {
+        "shopify_revenue": 1200.0,
+        "shopify_orders": 24.0,
+        "stripe_new_subs": 5.0,
+        "stripe_churn": 2.0,
+        "stripe_revenue": 1247.50,
+        "mtd_revenue": 18430.0,
+        "days_in_month": 31,
+        "days_remaining": 8,
+    }
+
+    def test_arithmetic_division(self):
+        result = pro._safe_eval_formula("shopify_revenue / shopify_orders", self.CTX)
+        self.assertAlmostEqual(result, 50.0)
+
+    def test_subtraction(self):
+        result = pro._safe_eval_formula("stripe_new_subs - stripe_churn", self.CTX)
+        self.assertAlmostEqual(result, 3.0)
+
+    def test_ternary_truthy(self):
+        result = pro._safe_eval_formula(
+            "shopify_revenue / shopify_orders if shopify_orders > 0 else 0", self.CTX
+        )
+        self.assertAlmostEqual(result, 50.0)
+
+    def test_ternary_falsy_zero_division_guard(self):
+        ctx = dict(self.CTX, shopify_orders=0.0)
+        result = pro._safe_eval_formula(
+            "shopify_revenue / shopify_orders if shopify_orders > 0 else 0", ctx
+        )
+        self.assertAlmostEqual(result, 0.0)
+
+    def test_math_round(self):
+        result = pro._safe_eval_formula("round(mtd_revenue / days_in_month * 30, 2)", self.CTX)
+        self.assertAlmostEqual(result, round(18430.0 / 31 * 30, 2))
+
+    def test_constant_expression(self):
+        result = pro._safe_eval_formula("42", {})
+        self.assertAlmostEqual(result, 42.0)
+
+    def test_forbidden_builtin_raises(self):
+        with self.assertRaises((ValueError, Exception)):
+            pro._safe_eval_formula("open('/etc/passwd')", self.CTX)
+
+    def test_invalid_syntax_raises(self):
+        with self.assertRaises((ValueError, SyntaxError)):
+            pro._safe_eval_formula("this is not valid python", self.CTX)
+
+    def test_unknown_variable_raises(self):
+        with self.assertRaises(ValueError):
+            pro._safe_eval_formula("unknown_var * 2", self.CTX)
+
+
 class TestTierCheck(unittest.TestCase):
     def test_is_pro_true(self):
         self.assertTrue(pro.is_pro(PRO_CONFIG))

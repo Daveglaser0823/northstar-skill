@@ -14,8 +14,10 @@ Import from northstar.py or run standalone:
   northstar trend     -- show 7-day trend only
 """
 
+import ast
 import json
 import math
+import operator
 import sys
 import subprocess
 from datetime import datetime, timedelta
@@ -121,6 +123,129 @@ def format_trend_section(trend: list[dict]) -> str:
 
 # ---- Custom Metrics --------------------------------------------------------
 
+# Safe expression evaluator - supports arithmetic, comparisons, and conditional
+# expressions using Python's AST. No eval/exec anywhere in this module.
+_SAFE_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+}
+
+# Math functions allowed in formulas
+_SAFE_MATH = {
+    "abs": abs,
+    "round": round,
+    "min": min,
+    "max": max,
+    "sqrt": math.sqrt,
+    "floor": math.floor,
+    "ceil": math.ceil,
+}
+
+
+def _safe_eval_node(node, context: dict):
+    """Recursively evaluate an AST node using only safe operations."""
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return node.value
+        raise ValueError(f"Unsupported constant type: {type(node.value)}")
+
+    if isinstance(node, ast.Name):
+        if node.id in context:
+            return context[node.id]
+        if node.id in _SAFE_MATH:
+            return _SAFE_MATH[node.id]
+        raise ValueError(f"Unknown variable: {node.id!r}")
+
+    if isinstance(node, ast.BinOp):
+        op_fn = _SAFE_OPS.get(type(node.op))
+        if op_fn is None:
+            raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+        left = _safe_eval_node(node.left, context)
+        right = _safe_eval_node(node.right, context)
+        return op_fn(left, right)
+
+    if isinstance(node, ast.UnaryOp):
+        op_fn = _SAFE_OPS.get(type(node.op))
+        if op_fn is None:
+            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+        return op_fn(_safe_eval_node(node.operand, context))
+
+    if isinstance(node, ast.Compare):
+        left = _safe_eval_node(node.left, context)
+        result = left
+        for op, comparator in zip(node.ops, node.comparators):
+            op_fn = _SAFE_OPS.get(type(op))
+            if op_fn is None:
+                raise ValueError(f"Unsupported comparison: {type(op).__name__}")
+            right = _safe_eval_node(comparator, context)
+            result = op_fn(left, right)
+            left = right
+        return result
+
+    if isinstance(node, ast.IfExp):
+        # Ternary: value_if_true if condition else value_if_false
+        condition = _safe_eval_node(node.test, context)
+        if condition:
+            return _safe_eval_node(node.body, context)
+        else:
+            return _safe_eval_node(node.orelse, context)
+
+    if isinstance(node, ast.Call):
+        func = _safe_eval_node(node.func, context)
+        if func not in _SAFE_MATH.values():
+            raise ValueError("Only math functions (abs, round, min, max, sqrt, floor, ceil) are allowed")
+        args = [_safe_eval_node(a, context) for a in node.args]
+        return func(*args)
+
+    if isinstance(node, ast.BoolOp):
+        if isinstance(node.op, ast.And):
+            result = True
+            for val in node.values:
+                result = result and _safe_eval_node(val, context)
+            return result
+        if isinstance(node.op, ast.Or):
+            result = False
+            for val in node.values:
+                result = result or _safe_eval_node(val, context)
+            return result
+
+    raise ValueError(f"Unsupported expression node: {type(node).__name__}")
+
+
+def _safe_eval_formula(formula: str, context: dict) -> float:
+    """
+    Parse and evaluate a metric formula string safely using AST parsing.
+    No eval(), exec(), or code compilation is used.
+
+    Supported: arithmetic operators, comparisons, ternary (if/else),
+    math functions (abs, round, min, max, sqrt, floor, ceil), named variables.
+
+    Example formulas:
+      "shopify_revenue / shopify_orders if shopify_orders > 0 else 0"
+      "stripe_new_subs - stripe_churn"
+      "round(mtd_revenue / days_in_month * 30, 2)"
+    """
+    try:
+        tree = ast.parse(formula.strip(), mode="eval")
+    except SyntaxError as e:
+        raise ValueError(f"Invalid formula syntax: {e}")
+    result = _safe_eval_node(tree.body, context)
+    return float(result) if result is not None else 0.0
+
+
 def evaluate_custom_metrics(config: dict, context: dict) -> list[dict]:
     """
     Evaluate user-defined metrics from config.
@@ -152,8 +277,8 @@ def evaluate_custom_metrics(config: dict, context: dict) -> list[dict]:
         threshold = m.get("threshold", {})
 
         try:
-            # Safe eval with only the context variables
-            value = eval(formula, {"__builtins__": {}}, {**context, **math.__dict__})
+            # Safe expression evaluation (no eval/exec - AST-based only)
+            value = _safe_eval_formula(formula, context)
 
             # Format value
             if fmt == "currency":
