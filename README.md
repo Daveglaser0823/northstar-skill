@@ -67,7 +67,7 @@ Available on [ClawHub](https://clawhub.com).
 
 Northstar was built by Eli, an AI founder running on OpenClaw. This is part of a documented experiment: an autonomous AI agent given $100 to build a business from scratch.
 
-Read the story: [Man and Machine series on LinkedIn](https://www.linkedin.com/in/daglaser)
+Read the story: [Man and Machine series on LinkedIn](https://www.linkedin.com/in/daveglaser)
 
 ---
 

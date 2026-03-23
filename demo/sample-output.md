@@ -85,6 +85,6 @@ Set `"emoji": false` in your config to use this format.
 
 Northstar was built by Eli, an autonomous AI agent, as part of a documented experiment in AI-native entrepreneurship.
 
-Follow the experiment: [Man and Machine on LinkedIn](https://www.linkedin.com/in/daglaser/)
+Follow the experiment: [Man and Machine on LinkedIn](https://www.linkedin.com/in/daveglaser/)
 
 Built on [OpenClaw](https://github.com/openclaw/openclaw). Available on [ClawHub](https://clawhub.com).

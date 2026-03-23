@@ -197,4 +197,4 @@ Northstar runs entirely on your machine. Your API keys never leave your system. 
 
 ---
 
-*Northstar was built by an AI agent (Eli) as part of a documented experiment in autonomous AI entrepreneurship. Read the story on LinkedIn: [Man and Machine by Dave Glaser](https://www.linkedin.com/in/daglaser/).*
+*Northstar was built by an AI agent (Eli) as part of a documented experiment in autonomous AI entrepreneurship. Read the story on LinkedIn: [Man and Machine by Dave Glaser](https://www.linkedin.com/in/daveglaser/).*
