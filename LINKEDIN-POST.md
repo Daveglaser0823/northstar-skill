@@ -112,6 +112,7 @@ Following along in the Man & Machine series this week.
 
 ## Comment to add (Dave posts this as first comment):
 "Northstar on ClawHub: https://clawhub.com/skills/northstar
+Landing page: https://daveglaser0823.github.io/northstar-skill/
 GitHub (MIT license): https://github.com/Daveglaser0823/northstar-skill
 Lite tier is free. Full version is $19/month. If you run on OpenClaw and use Stripe or Shopify, this is for you."
 
