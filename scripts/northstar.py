@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.9.3
+Version: 1.9.4
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
@@ -810,7 +810,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v1.9.3 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.9.4 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -1250,6 +1250,50 @@ def cmd_setup():
             delivery["telegram_bot_token"] = bot_token
             delivery["telegram_chat_id"] = chat_id
 
+        # --- Pro: multi-channel additional channels ---
+        if tier == "pro":
+            print()
+            print("  Pro tier supports up to 3 delivery channels simultaneously.")
+            channels_list = [channel]
+            remaining_channels = [c for c in ("imessage", "slack", "telegram") if c != channel]
+
+            for i, next_default in enumerate(remaining_channels[:2], start=2):
+                add_another = ask_yn(f"Add a 2nd delivery channel? (optional)", default=False) if i == 2 else ask_yn("Add a 3rd delivery channel? (optional)", default=False)
+                if not add_another:
+                    break
+                _avail = [c for c in ("imessage", "slack", "telegram", "none") if c not in channels_list]
+                print(f"  Available: {', '.join(_avail)}")
+                while True:
+                    ch2 = ask(f"Channel {i}", default=_avail[0] if _avail else "none").lower()
+                    if ch2 in _avail:
+                        break
+                    print(f"  Choose from: {', '.join(_avail)}")
+                channels_list.append(ch2)
+
+                if ch2 == "imessage" and "imessage_recipient" not in delivery:
+                    print()
+                    while True:
+                        num2 = ask("Phone number for iMessage (E.164 format)")
+                        if num2.startswith("+") and len(num2) >= 10:
+                            break
+                    delivery["imessage_recipient"] = num2
+
+                elif ch2 == "slack" and "slack_webhook" not in delivery:
+                    print()
+                    print("  Get a webhook URL at: api.slack.com/apps > your app > Incoming Webhooks.")
+                    webhook2 = ask("Slack webhook URL")
+                    delivery["slack_webhook"] = webhook2
+
+                elif ch2 == "telegram" and "telegram_bot_token" not in delivery:
+                    print()
+                    bot_token2 = ask("Telegram bot token")
+                    chat_id2 = ask("Telegram chat ID")
+                    delivery["telegram_bot_token"] = bot_token2
+                    delivery["telegram_chat_id"] = chat_id2
+
+            if len(channels_list) > 1:
+                delivery["channels"] = channels_list
+
         config["delivery"] = delivery
     print()
 
@@ -1465,7 +1509,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.9.3")
+    parser.add_argument("--version", action="version", version="Northstar 1.9.4")
 
     args = parser.parse_args()
 

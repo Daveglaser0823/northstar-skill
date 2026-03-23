@@ -1,5 +1,10 @@
 # Northstar Changelog
 
+## [1.9.4] - 2026-03-23
+
+### Added
+- **Pro multi-channel setup wizard**: `northstar setup` now asks Pro users if they want to add a 2nd and 3rd delivery channel. Previously Pro multi-channel required manual JSON editing. Now fully guided in the wizard.
+
 ## [1.9.3] - 2026-03-23
 
 ### Fixed
