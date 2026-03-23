@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.9.0
+Version: 1.9.1
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
@@ -738,6 +738,13 @@ def deliver(message: str, config: dict, dry_run: bool = False) -> bool:
         return True
 
     if channel == "imessage":
+        import platform as _platform
+        if _platform.system() != "Darwin":
+            raise RuntimeError(
+                "iMessage delivery requires macOS. "
+                "You're on " + _platform.system() + ".\n"
+                "Switch to Slack or Telegram delivery: run 'northstar setup' and choose a different channel."
+            )
         if not recipient:
             raise ValueError("delivery.recipient must be set for iMessage")
         # Write a temp AppleScript file to handle multi-line messages safely
@@ -1194,13 +1201,18 @@ def cmd_setup():
         print("  Lite tier: terminal output only. No delivery channel needed.")
         config["delivery"] = {"channel": "none"}
     else:
+        import platform as _plat
+        _is_mac = _plat.system() == "Darwin"
         print("  imessage  - macOS only. Sends to your phone/Mac.")
+        if not _is_mac:
+            print("             (NOT AVAILABLE on your system - use Slack or Telegram instead)")
         print("  slack     - Any OS. Requires a Slack webhook URL.")
         print("  telegram  - Any OS. Requires a Telegram bot token and chat ID.")
         print("  none      - Terminal output only (for testing).")
         print()
+        _default_channel = "imessage" if _is_mac else "slack"
         while True:
-            channel = ask("Delivery channel", default="imessage").lower()
+            channel = ask("Delivery channel", default=_default_channel).lower()
             if channel in ("imessage", "slack", "telegram", "none"):
                 break
             print("  Enter 'imessage', 'slack', 'telegram', or 'none'.")
@@ -1446,7 +1458,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.9.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.9.1")
 
     args = parser.parse_args()
 

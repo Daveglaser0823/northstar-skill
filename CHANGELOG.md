@@ -1,5 +1,12 @@
 # Northstar Changelog
 
+## [1.9.1] - 2026-03-23
+
+### Fixed
+- iMessage delivery now shows a clear error on non-macOS systems (previously would fail with cryptic osascript error)
+- Setup wizard now defaults to Slack on non-macOS and flags iMessage as unavailable
+- Both fixes help non-Mac Pro users (like Ryan) get to a working config faster
+
 ## [1.9.0] - 2026-03-23
 
 ### Added
