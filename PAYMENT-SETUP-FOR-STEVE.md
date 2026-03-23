@@ -1,95 +1,114 @@
 # Payment Setup - Action Required Before Launch
-*Written by Eli | Day 4 | March 23, 2026*
-*For Steve (Chairman) - ~10 minutes of work*
+*Updated by Eli | Day 4 | v1.9.0 | March 23, 2026*
+*For Steve (Chairman) - ~15 minutes of work*
 
 ---
 
-## The Problem
+## What Changed (v1.9.0 Update)
 
-Launch is Tuesday March 24, 8 AM. When the first person wants to pay $19/month for Standard:
-- They open a GitHub issue (issue template now set up)
-- I reply with a license key and... no payment link
+The code now uses **Polar.sh** for payments and license key validation. This replaces the earlier GitHub issue + manual Stripe approach. Polar is simpler for indie software:
+- Handles tax compliance globally (Merchant of Record)
+- Automatically emails customers their license key after purchase
+- License keys auto-validate against their API
+- 5% transaction fee only on sales (no monthly fee)
 
-We need a real payment link before launch or we miss Customer Zero.
-
----
-
-## Recommended Solution: Stripe Payment Links
-
-This is the fastest, cleanest option. Requires a Stripe account.
-
-**Option A: Use Dave's existing Stripe account**
-If Dave has a Stripe account (likely, since he runs Dwolla):
-1. Log in at dashboard.stripe.com
-2. Go to **Payment Links** (left sidebar)
-3. Create new payment link:
-   - Product: "Northstar Standard"
-   - Price: $19 recurring / month
-   - Copy the link (looks like `https://buy.stripe.com/XXXXXXXX`)
-4. Do the same for "Northstar Pro" at $49/month
-5. Send both links to me (drop in a file or add to PAYMENT.md)
-
-That's it. ~5 minutes.
-
-**Option B: New Stripe account under steve.glaser.ops@gmail.com**
-1. Create Stripe account at stripe.com using steve.glaser.ops@gmail.com
-2. Same steps above
-3. Stripe takes 2-3 days for bank verification, but payment links work immediately (payouts delayed until verified)
+**The code is ready. Polar.sh account setup is the only remaining step.**
 
 ---
 
-## Backup Option: Gumroad
+## Step 1: Create a Polar.sh Account
 
-If Stripe isn't available:
-1. Create Gumroad account at gumroad.com with steve.glaser.ops@gmail.com
-2. Create two products:
-   - "Northstar Standard" - $19/month recurring
-   - "Northstar Pro" - $49/month recurring
-3. Get the product URLs and send them to me
+1. Go to https://polar.sh
+2. Sign up with steve.glaser.ops@gmail.com (GitHub OAuth or email)
+3. Create an organization - name it **Northstar** or **northstar-skill**
+4. Connect a bank account (Stripe Connect via Polar's flow)
 
-Gumroad links look like: `https://gumroad.com/l/northstar-standard`
-
-Gumroad takes a 10% fee but requires no bank verification to start collecting.
+**Time: ~10 minutes**
 
 ---
 
-## Backup-Backup: Manual (Do NOT Use If Possible)
+## Step 2: Create Two Products
 
-If neither is set up in time:
-- Reply to license requests with: "Venmo @daveglaser / PayPal glaser.dave@gmail.com - $19 for Standard, $49 for Pro. Send 'Northstar Standard' in the memo."
-- This is ugly and manual but better than turning away Customer Zero.
+In your Polar dashboard, create two subscription products:
 
-**This should be a last resort. Please set up Stripe or Gumroad first.**
+**Product 1: Northstar Standard**
+- Name: `Northstar Standard`
+- Price: `$19 / month` (recurring)
+- Benefits: Add "License Key" benefit (Polar auto-generates these)
+  - Prefix: `NSS-`
+  - Limit activations per key: `3` (one install per device, reasonable)
+- URL slug: `northstar-standard`
+- Final URL will be: `https://polar.sh/daveglaser0823/northstar-standard`
+
+**Product 2: Northstar Pro**
+- Name: `Northstar Pro`
+- Price: `$49 / month` (recurring)
+- Benefits: Add "License Key" benefit
+  - Prefix: `NSP-`
+  - Limit activations: `5`
+- URL slug: `northstar-pro`
+- Final URL: `https://polar.sh/daveglaser0823/northstar-pro`
+
+**Time: ~5 minutes**
 
 ---
 
-## What I Need
+## Step 3: Get the Organization ID
 
-Just the payment URLs. Drop them in this file under "Payment Links Confirmed":
+After creating the account:
+1. Go to Settings (gear icon)
+2. Copy your **Organization ID** (UUID format, looks like `a1b2c3d4-...`)
+3. Drop it in a file or message me
 
-```
-## Payment Links Confirmed
-
-Standard ($19/month): https://...
-Pro ($49/month): https://...
+I'll create `config/polar.json`:
+```json
+{
+  "organization_id": "YOUR-ORG-ID-HERE"
+}
 ```
 
-Once I have these, I update PAYMENT.md, update the landing page, and we're fully launch-ready.
+This enables live license key validation against Polar's API. Without it, keys are validated by prefix format only (still works, just offline).
 
 ---
 
-## Launch Is Ready Except For This
+## Option B: Manual Workaround (If Polar Not Ready by Launch)
 
-| Asset | Status |
-|-------|--------|
-| GitHub repo + issue templates | DONE |
-| Landing page + pricing CTAs | DONE |
-| ClawHub listing | LIVE |
-| 52 tests passing | DONE |
-| LinkedIn post (Version 3) | READY |
-| Day 7 post | READY |
-| **Payment processor** | NEEDS STEVE ACTION |
+If Polar setup isn't done before 8 AM launch:
+
+1. When a license request comes in via GitHub issue, reply:
+   ```
+   Thanks! Send $19 via Venmo (@DaveGlaser) with note "Northstar Standard [your-email]". 
+   License key arrives in <1 hour.
+   ```
+2. After payment confirmed, generate key: `python3 -c "import secrets; print('NSS-' + secrets.token_urlsafe(20).upper()[:20])"`
+3. Add key to `config/northstar.json` under `license_keys` array
+4. Reply with key
+
+Not ideal, but it closes Customer Zero without missing a sale.
 
 ---
 
-*Eli | "The only gap between us and launch-ready is this file."*
+## What the Code Does Automatically (Once Polar Is Set Up)
+
+When a customer purchases on Polar:
+1. Polar emails them a `NSS-XXXX` (Standard) or `NSP-XXXX` (Pro) license key automatically
+2. Customer runs: `northstar activate NSS-XXXXXX`
+3. Northstar calls Polar API to validate the key
+4. Config updates to `tier: standard` or `tier: pro`
+5. Pro features or Standard integrations unlock
+
+Zero manual steps needed after Polar setup.
+
+---
+
+## Links for Reference
+
+- Polar dashboard: https://polar.sh/dashboard
+- Polar docs: https://polar.sh/docs/introduction
+- License key docs: https://polar.sh/docs/features/benefits/license-keys
+- Northstar repo: https://github.com/Daveglaser0823/northstar-skill
+
+---
+
+*Priority: HIGH. Payment processor is the last gap before a complete end-to-end purchase flow.*
+*Without it, we can collect interest but not money.*
