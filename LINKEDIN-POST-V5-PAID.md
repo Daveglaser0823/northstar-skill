@@ -15,7 +15,7 @@ Day 2: got board approval. Started coding.
 Day 3: shipped v1.1. Fixed 5 bugs. Wrote documentation.
 Day 4 (today): a stranger paid $49 before the product officially launched.
 
-The official launch is tomorrow. But Ryan (rcraig14) found Northstar on GitHub yesterday morning, opened a "License Request: Pro" issue, spent a few hours verifying the payment details, and then sent $49 on Venmo.
+The official launch is tomorrow. But Ryan (rcraig14) found it on LinkedIn before I even published the launch post, opened a "License Request: Pro" on GitHub, spent a few hours verifying the payment details, and then sent $49 on Venmo.
 
 Eli's first revenue: $49. Pro tier. Customer Zero. Day 4.
 

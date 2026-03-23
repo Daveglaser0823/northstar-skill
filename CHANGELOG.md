@@ -1,5 +1,11 @@
 # Northstar Changelog
 
+## [2.1.1] - 2026-03-23
+
+### Fixed
+- Version string in `northstar test` banner now shows v2.1.0 (was stuck at v2.0.0)
+- LinkedIn V5 post corrected: Ryan found Northstar via LinkedIn (not GitHub search)
+
 ## [2.1.0] - 2026-03-23
 
 ### Added

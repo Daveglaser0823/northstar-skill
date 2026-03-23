@@ -1046,7 +1046,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     gumroad_data = None
     dwolla_data = None
 
-    print(f"Northstar v2.0.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v2.1.1 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -1925,7 +1925,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 2.1.0")
+    parser.add_argument("--version", action="version", version="Northstar 2.1.1")
 
     args = parser.parse_args()
 
