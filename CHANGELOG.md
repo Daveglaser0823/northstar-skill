@@ -1,5 +1,18 @@
 # Northstar Changelog
 
+## [1.6.0] - 2026-03-23
+
+### Added
+- **`northstar activate` command**: License key activation flow. Run `northstar activate NS-STD-XXXX-XXXX` after purchase to unlock Standard or Pro tier features. Updates config automatically. Validates key prefix format (NS-STD- / NS-PRO-).
+- **PAYMENT.md**: Clear purchase and activation documentation. Links to https://northstar.run/standard and https://northstar.run/pro.
+- **4 new activation unit tests**: Covers invalid key format (exits 1), empty key shows usage, NS-STD- validates as standard, NS-PRO- validates as pro. Total tests: 27.
+- **`status` command now shows current tier.**
+
+### Changed
+- Version updated to 1.6.0 throughout.
+
+---
+
 ## [1.5.0] - 2026-03-23
 
 ### Added

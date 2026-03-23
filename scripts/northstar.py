@@ -871,12 +871,72 @@ def cmd_run(config: dict, dry_run: bool = False):
 
     print(f"  Done. Run #{state['runs']}.")
 
+def cmd_activate(license_key: str):
+    """Activate Standard or Pro tier with a license key."""
+    if not license_key:
+        print("Usage: northstar activate <license-key>")
+        print()
+        print("Purchase at: https://northstar.run")
+        print("  Standard ($19/month): https://northstar.run/standard")
+        print("  Pro ($49/month):       https://northstar.run/pro")
+        return
+
+    # Validate license key format (basic check - real validation in POST-LAUNCH)
+    key = license_key.strip().upper()
+    valid_prefixes = {"NS-STD-": "standard", "NS-PRO-": "pro"}
+    tier = None
+    for prefix, t in valid_prefixes.items():
+        if key.startswith(prefix):
+            tier = t
+            break
+
+    if not tier:
+        print(f"Invalid license key format: {license_key}")
+        print("Keys start with NS-STD- (Standard) or NS-PRO- (Pro).")
+        print("Purchase at: https://northstar.run")
+        sys.exit(1)
+
+    # Load config and apply tier
+    try:
+        config = load_config(None)
+    except FileNotFoundError:
+        print("Config not found. Run 'northstar setup' first.")
+        sys.exit(1)
+
+    config["tier"] = tier
+    config["license_key"] = key
+
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(config, f, indent=2)
+
+    print(f"\nNorthstar {tier.title()} activated.")
+    print(f"License key stored in config.")
+    print()
+    if tier == "standard":
+        print("Standard features now available:")
+        print("  - Shopify integration")
+        print("  - Lemon Squeezy integration")
+        print("  - Gumroad integration")
+        print("  - iMessage, Slack, and Telegram delivery")
+        print("  - Scheduled daily runs")
+    elif tier == "pro":
+        print("Pro features now available:")
+        print("  - All Standard features")
+        print("  - Weekly digest (northstar digest)")
+        print("  - 7-day trend sparkline (northstar trend)")
+        print("  - Multi-channel delivery (up to 3 channels)")
+        print("  - Custom metrics")
+    print()
+    print("Run 'northstar test' to verify your setup.")
+
+
 def cmd_status(config: dict):
     """Show config and run status."""
     state = load_state()
     print("\nNorthstar Status")
     print("=" * 40)
     print(f"Config: {CONFIG_PATH}")
+    print(f"Tier: {config.get('tier', 'lite')}")
     print(f"Last run: {state.get('last_run', 'Never')}")
     print(f"Total runs: {state.get('runs', 0)}")
     print()
@@ -889,6 +949,10 @@ def cmd_status(config: dict):
     print()
     print("To run now: northstar run")
     print("To test:    northstar test")
+    tier = config.get("tier", "lite")
+    if tier == "lite":
+        print()
+        print("Upgrade to Standard ($19/month): https://northstar.run/standard")
 
 def cmd_stripe(config: dict):
     """Show raw Stripe data (debug)."""
@@ -1261,6 +1325,7 @@ def main():
 Commands:
   demo      Show a sample briefing with demo data (no config needed)
   setup     Interactive setup wizard - configure without editing JSON
+  activate  Activate Standard or Pro tier with a license key
   run       Run briefing and deliver to configured channel
   test      Dry-run - print briefing to terminal only
   status    Show config and last run info
@@ -1270,21 +1335,24 @@ Commands:
   trend     [Pro] Show 7-day revenue trend sparkline
 
 Examples:
-  northstar demo            # Try it first - no config needed
-  northstar setup           # Configure interactively - no JSON editing required
+  northstar demo                          # Try it first - no config needed
+  northstar setup                         # Configure interactively
+  northstar activate NS-STD-XXXX-XXXX     # Activate after purchase
   northstar run
   northstar test
   northstar status
-  northstar digest          # Pro tier only
-  northstar trend           # Pro tier only
+  northstar digest                        # Pro tier only
+  northstar trend                         # Pro tier only
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend", "demo", "setup"],
+                        choices=["run", "test", "status", "stripe", "shopify", "digest", "trend", "demo", "setup", "activate"],
                         help="Command to run (default: run)")
+    parser.add_argument("license_key", nargs="?", default=None,
+                        help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.5.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.6.0")
 
     args = parser.parse_args()
 
@@ -1295,6 +1363,10 @@ Examples:
 
     if args.command == "setup":
         cmd_setup()
+        return
+
+    if args.command == "activate":
+        cmd_activate(args.license_key or "")
         return
 
     # Load config

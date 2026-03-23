@@ -237,6 +237,80 @@ class TestConfigLoading(unittest.TestCase):
             load_config(bad_path)
 
 
+class TestActivateCommand(unittest.TestCase):
+    def test_activate_invalid_key_format(self):
+        """Invalid key prefix should print error and exit."""
+        from northstar import cmd_activate
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with self.assertRaises(SystemExit) as cm:
+            with redirect_stdout(buf):
+                cmd_activate("INVALID-KEY")
+        self.assertEqual(cm.exception.code, 1)
+        self.assertIn("Invalid license key format", buf.getvalue())
+
+    def test_activate_no_key_shows_usage(self):
+        """Empty key shows usage with purchase URL."""
+        from northstar import cmd_activate
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_activate("")
+        output = buf.getvalue()
+        self.assertIn("Usage: northstar activate", output)
+        self.assertIn("northstar.run", output)
+
+    def test_activate_std_key_validates(self):
+        """NS-STD- prefix correctly identified as standard tier."""
+        from northstar import cmd_activate
+        import io, tempfile, json, os
+        from contextlib import redirect_stdout
+        from pathlib import Path
+        # Write a minimal config to a temp file
+        cfg = {"tier": "lite", "delivery": {}, "stripe": {}, "schedule": {}}
+        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+        json.dump(cfg, tmp)
+        tmp.close()
+        # Patch CONFIG_PATH temporarily
+        import northstar as ns
+        original = ns.CONFIG_PATH
+        ns.CONFIG_PATH = Path(tmp.name)
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                cmd_activate("NS-STD-TEST-ABCD-1234")
+        finally:
+            ns.CONFIG_PATH = original
+            os.unlink(tmp.name)
+        output = buf.getvalue()
+        self.assertIn("standard", output.lower())
+
+    def test_activate_pro_key_validates(self):
+        """NS-PRO- prefix correctly identified as pro tier."""
+        from northstar import cmd_activate
+        import io, tempfile, json, os
+        from contextlib import redirect_stdout
+        from pathlib import Path
+        cfg = {"tier": "lite", "delivery": {}, "stripe": {}, "schedule": {}}
+        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+        json.dump(cfg, tmp)
+        tmp.close()
+        import northstar as ns
+        original = ns.CONFIG_PATH
+        ns.CONFIG_PATH = Path(tmp.name)
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                cmd_activate("NS-PRO-TEST-ABCD-5678")
+        finally:
+            ns.CONFIG_PATH = original
+            os.unlink(tmp.name)
+        output = buf.getvalue()
+        self.assertIn("pro", output.lower())
+
+
 # ---- Runner ----------------------------------------------------------------
 
 if __name__ == "__main__":
