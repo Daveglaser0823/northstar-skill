@@ -36,6 +36,13 @@
     "access_token": "shpat_YOUR_TOKEN_HERE"
   },
 
+  "lemonsqueezy": {
+    "_comment": "Optional. If you sell via Lemon Squeezy, add your API key for combined revenue view.",
+    "enabled": false,
+    "api_key": "YOUR_LEMONSQUEEZY_API_KEY",
+    "monthly_revenue_goal": 0
+  },
+
   "alerts": {
     "payment_failures": true,
     "churn_threshold": 3,

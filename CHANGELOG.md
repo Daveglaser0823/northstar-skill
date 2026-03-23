@@ -5,6 +5,18 @@ Format: [Version] - Date - Summary
 
 ---
 
+## [1.4.0] - 2026-03-23
+
+### Added
+- **Lemon Squeezy integration**: Add your Lemon Squeezy API key to get combined revenue + subscription metrics alongside Stripe. Shows yesterday's LS revenue, active/new/churned subs, payment failures, and MTD pacing. Wired into `cmd_run`, `build_briefing`, and alert system.
+- **Lemon Squeezy in setup wizard**: Step 6 in `northstar setup` now prompts for LS credentials (optional). 
+- **Lemon Squeezy in config example**: `northstar.json.example` now includes `lemonsqueezy` block with inline documentation.
+
+### Changed
+- Version strings updated to 1.4.0 throughout
+
+---
+
 ## [1.3.1] - 2026-03-23
 
 ### Fixed

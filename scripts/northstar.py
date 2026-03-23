@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.3.0
+Version: 1.4.0
 Author: Eli (AI founder, OpenClaw-native)
 
-Pulls Stripe and Shopify metrics, formats a daily briefing,
+Pulls Stripe, Shopify, and Lemon Squeezy metrics, formats a daily briefing,
 and delivers it via iMessage, Slack, or Telegram.
 """
 
@@ -263,6 +263,162 @@ def fetch_shopify_metrics(shop_domain: str, access_token: str) -> dict:
         "top_product_units": top_product_units,
     }
 
+# ---- Lemon Squeezy --------------------------------------------------------
+
+def fetch_lemon_squeezy_metrics(api_key: str, goal_dollars: float = 0) -> dict:
+    """Fetch yesterday's Lemon Squeezy metrics via REST API."""
+    import urllib.request
+    import urllib.parse
+
+    BASE = "https://api.lemonsqueezy.com/v1"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Accept": "application/vnd.api+json",
+    }
+
+    def ls_get(path: str, params: dict = None) -> dict:
+        url = f"{BASE}{path}"
+        if params:
+            url += "?" + urllib.parse.urlencode(params)
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read())
+
+    now = datetime.now()
+    yesterday_start = datetime(now.year, now.month, now.day) - timedelta(days=1)
+    yesterday_end = datetime(now.year, now.month, now.day)
+    month_start = datetime(now.year, now.month, 1)
+
+    def in_window(dt_str: str, start: datetime, end: datetime) -> bool:
+        """Check if ISO timestamp is within [start, end)."""
+        try:
+            # Lemon Squeezy timestamps: '2024-01-15T10:23:45.000000Z'
+            dt_str_clean = dt_str.rstrip("Z").split(".")[0]
+            dt = datetime.strptime(dt_str_clean, "%Y-%m-%dT%H:%M:%S")
+            return start <= dt < end
+        except Exception:
+            return False
+
+    # Fetch recent paid orders (last 7 days, paginated)
+    all_orders = []
+    page = 1
+    while True:
+        data = ls_get("/orders", {
+            "filter[status]": "paid",
+            "sort": "-createdAt",
+            "page[size]": 100,
+            "page[number]": page,
+        })
+        orders = data.get("data", [])
+        all_orders.extend(orders)
+        # Stop if we've passed yesterday_start (orders are sorted newest first)
+        if orders:
+            last_created = orders[-1].get("attributes", {}).get("created_at", "")
+            try:
+                last_dt_str = last_created.rstrip("Z").split(".")[0]
+                last_dt = datetime.strptime(last_dt_str, "%Y-%m-%dT%H:%M:%S")
+                if last_dt < month_start:
+                    break
+            except Exception:
+                pass
+        meta = data.get("meta", {}).get("page", {})
+        if page >= meta.get("lastPage", 1):
+            break
+        page += 1
+
+    # Filter orders
+    yesterday_orders = [
+        o for o in all_orders
+        if in_window(o.get("attributes", {}).get("created_at", ""), yesterday_start, yesterday_end)
+    ]
+    mtd_orders = [
+        o for o in all_orders
+        if in_window(o.get("attributes", {}).get("created_at", ""), month_start, yesterday_end)
+    ]
+
+    def order_revenue(o: dict) -> float:
+        return o.get("attributes", {}).get("total_usd", 0) / 100.0
+
+    revenue_yesterday = sum(order_revenue(o) for o in yesterday_orders)
+    revenue_mtd = sum(order_revenue(o) for o in mtd_orders)
+
+    # Yesterday same day last week (WoW)
+    week_ago_start = yesterday_start - timedelta(days=7)
+    week_ago_end = yesterday_end - timedelta(days=7)
+    last_week_orders = [
+        o for o in all_orders
+        if in_window(o.get("attributes", {}).get("created_at", ""), week_ago_start, week_ago_end)
+    ]
+    revenue_last_week = sum(order_revenue(o) for o in last_week_orders)
+    wow_change = None
+    if revenue_last_week > 0:
+        wow_change = ((revenue_yesterday - revenue_last_week) / revenue_last_week) * 100
+
+    # Fetch active subscriptions (count)
+    subs_data = ls_get("/subscriptions", {
+        "filter[status]": "active",
+        "page[size]": 1,
+    })
+    total_active = subs_data.get("meta", {}).get("page", {}).get("total", 0)
+
+    # New subscriptions yesterday
+    new_subs_data = ls_get("/subscriptions", {
+        "sort": "-createdAt",
+        "page[size]": 100,
+    })
+    all_recent_subs = new_subs_data.get("data", [])
+    new_sub_count = sum(
+        1 for s in all_recent_subs
+        if in_window(s.get("attributes", {}).get("created_at", ""), yesterday_start, yesterday_end)
+    )
+
+    # Cancelled subscriptions yesterday (status=cancelled, cancelled means it happened recently)
+    cancelled_data = ls_get("/subscriptions", {
+        "filter[status]": "cancelled",
+        "sort": "-updatedAt",
+        "page[size]": 100,
+    })
+    cancelled_subs = cancelled_data.get("data", [])
+    churned_count = sum(
+        1 for s in cancelled_subs
+        if in_window(s.get("attributes", {}).get("updated_at", ""), yesterday_start, yesterday_end)
+    )
+
+    # Past-due (failed payments) as of today
+    past_due_data = ls_get("/subscriptions", {
+        "filter[status]": "past_due",
+        "page[size]": 1,
+    })
+    payment_failures = past_due_data.get("meta", {}).get("page", {}).get("total", 0)
+
+    # MTD pacing
+    days_in_month = (datetime(now.year, now.month % 12 + 1, 1) - timedelta(days=1)).day if now.month < 12 else 31
+    days_elapsed = now.day - 1
+    days_remaining = days_in_month - days_elapsed
+    goal_pct = (revenue_mtd / goal_dollars * 100) if goal_dollars > 0 else None
+    daily_run_rate = revenue_mtd / days_elapsed if days_elapsed > 0 else 0
+    projected_month = daily_run_rate * days_in_month if daily_run_rate > 0 else 0
+    on_track = projected_month >= goal_dollars if goal_dollars > 0 else None
+
+    return {
+        "source": "lemonsqueezy",
+        "revenue_yesterday": revenue_yesterday,
+        "revenue_last_week_same_day": revenue_last_week,
+        "wow_change_pct": wow_change,
+        "revenue_mtd": revenue_mtd,
+        "goal_dollars": goal_dollars,
+        "goal_pct": goal_pct,
+        "days_remaining": days_remaining,
+        "on_track": on_track,
+        "projected_month": projected_month,
+        "active_subs": total_active,
+        "new_subs": new_sub_count,
+        "churned_subs": churned_count,
+        "payment_failures": payment_failures,
+        "retries_pending": 0,  # LS calls these past_due, reported in payment_failures
+    }
+
+
 # ---- Formatting ------------------------------------------------------------
 
 def fmt_currency(amount: float) -> str:
@@ -279,7 +435,8 @@ def fmt_pct(pct: float, sign: bool = True) -> str:
         return f"{prefix}{s}"
     return s
 
-def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Optional[dict]) -> str:
+def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Optional[dict],
+                   lemonsqueezy_data: Optional[dict] = None) -> str:
     """Build the briefing message."""
     now = datetime.now()
     use_emoji = config.get("format", {}).get("emoji", True)
@@ -321,6 +478,33 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
         else:
             lines.append(f"Month-to-date: {fmt_currency(stripe_data['revenue_mtd'])}")
 
+    # Lemon Squeezy section (shown like Stripe - revenue, subs, MTD)
+    if lemonsqueezy_data:
+        ls = lemonsqueezy_data
+        rev = ls["revenue_yesterday"]
+        wow = ls.get("wow_change_pct")
+        wow_str = f" ({fmt_pct(wow)} vs last week)" if wow is not None else ""
+        lines.append(f"Lemon Squeezy: {fmt_currency(rev)} yesterday{wow_str}")
+
+        active = ls["active_subs"]
+        new = ls["new_subs"]
+        churned = ls["churned_subs"]
+        sub_detail = []
+        if new > 0:
+            sub_detail.append(f"+{new} new")
+        if churned > 0:
+            sub_detail.append(f"-{churned} churn")
+        sub_str = f" ({', '.join(sub_detail)})" if sub_detail else ""
+        lines.append(f"LS subscribers: {active:,}{sub_str}")
+
+        if ls.get("goal_pct") is not None:
+            mtd = ls["revenue_mtd"]
+            goal = ls["goal_dollars"]
+            pct = ls["goal_pct"]
+            lines.append(f"LS month-to-date: {fmt_currency(mtd)} ({pct:.0f}% of {fmt_currency(goal)} goal)")
+        else:
+            lines.append(f"LS month-to-date: {fmt_currency(ls['revenue_mtd'])}")
+
     # Shopify section
     if shopify_data and config.get("shopify", {}).get("enabled"):
         fulfilled = shopify_data["orders_fulfilled"]
@@ -342,7 +526,6 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
         failures = stripe_data.get("payment_failures", 0)
         retries = stripe_data.get("retries_pending", 0)
         churn_threshold = config.get("alerts", {}).get("churn_threshold", 3)
-        large_refund = config.get("alerts", {}).get("large_refund_threshold", 100)
 
         if failures > 0 or retries > 0:
             warn = "⚠️ " if use_emoji else "ALERT: "
@@ -352,6 +535,16 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
         if stripe_data.get("churned_subs", 0) >= churn_threshold:
             warn = "⚠️ " if use_emoji else "ALERT: "
             alerts.append(f"{warn}High churn: {stripe_data['churned_subs']} cancellations yesterday")
+
+    if lemonsqueezy_data:
+        ls_failures = lemonsqueezy_data.get("payment_failures", 0)
+        churn_threshold = config.get("alerts", {}).get("churn_threshold", 3)
+        if ls_failures > 0:
+            warn = "⚠️ " if use_emoji else "ALERT: "
+            alerts.append(f"{warn}{ls_failures} Lemon Squeezy subscription{'s' if ls_failures > 1 else ''} past due")
+        if lemonsqueezy_data.get("churned_subs", 0) >= churn_threshold:
+            warn = "⚠️ " if use_emoji else "ALERT: "
+            alerts.append(f"{warn}High LS churn: {lemonsqueezy_data['churned_subs']} cancellations yesterday")
 
     if shopify_data and shopify_data.get("refund_total", 0) >= config.get("alerts", {}).get("large_refund_threshold", 100):
         warn = "⚠️ " if use_emoji else "ALERT: "
@@ -449,8 +642,9 @@ def cmd_run(config: dict, dry_run: bool = False):
     """Run the briefing."""
     stripe_data = None
     shopify_data = None
+    lemonsqueezy_data = None
 
-    print(f"Northstar v1.3.1 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.4.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -464,6 +658,17 @@ def cmd_run(config: dict, dry_run: bool = False):
             stripe_data = fetch_stripe_metrics(api_key, float(goal), currency)
             print("OK")
 
+    # Fetch Lemon Squeezy
+    if config.get("lemonsqueezy", {}).get("enabled"):
+        ls_key = config["lemonsqueezy"].get("api_key", "")
+        if not ls_key or ls_key.startswith("YOUR_"):
+            print("  Lemon Squeezy: SKIP (no API key configured)")
+        else:
+            print("  Fetching Lemon Squeezy data...", end=" ", flush=True)
+            ls_goal = config["lemonsqueezy"].get("monthly_revenue_goal", 0)
+            lemonsqueezy_data = fetch_lemon_squeezy_metrics(ls_key, float(ls_goal))
+            print("OK")
+
     # Fetch Shopify
     if config.get("shopify", {}).get("enabled"):
         domain = config["shopify"].get("shop_domain", "")
@@ -475,13 +680,13 @@ def cmd_run(config: dict, dry_run: bool = False):
             shopify_data = fetch_shopify_metrics(domain, token)
             print("OK")
 
-    if not stripe_data and not shopify_data:
+    if not stripe_data and not lemonsqueezy_data and not shopify_data:
         print("\n  No data sources configured. Edit your config file.")
         print(f"  Config: {CONFIG_PATH}")
         return
 
     # Build and deliver briefing
-    briefing = build_briefing(config, stripe_data, shopify_data)
+    briefing = build_briefing(config, stripe_data, shopify_data, lemonsqueezy_data)
 
     if dry_run:
         deliver(briefing, config, dry_run=True)
@@ -773,6 +978,30 @@ def cmd_setup():
     else:
         config["shopify"] = {"enabled": False}
 
+    # --- Lemon Squeezy ---
+    if tier in ("standard", "pro"):
+        print("Step 6: Lemon Squeezy (optional)")
+        print("  If you sell through Lemon Squeezy, add it here for a combined revenue view.")
+        print()
+        ls_enabled = ask_yn("Do you use Lemon Squeezy?", default=False)
+        if ls_enabled:
+            ls_key = ask("Lemon Squeezy API key", secret=True)
+            ls_goal_str = ask("Monthly revenue goal in dollars (Lemon Squeezy)", default="0")
+            try:
+                ls_goal = float(ls_goal_str.replace(",", "").replace("$", ""))
+            except ValueError:
+                ls_goal = 0.0
+            config["lemonsqueezy"] = {
+                "enabled": True,
+                "api_key": ls_key,
+                "monthly_revenue_goal": ls_goal,
+            }
+        else:
+            config["lemonsqueezy"] = {"enabled": False}
+        print()
+    else:
+        config["lemonsqueezy"] = {"enabled": False}
+
     # --- Alerts ---
     config["alerts"] = {
         "payment_failures": True,
@@ -862,7 +1091,7 @@ Examples:
                         help="Command to run (default: run)")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.3.1")
+    parser.add_argument("--version", action="version", version="Northstar 1.4.0")
 
     args = parser.parse_args()
 
