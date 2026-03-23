@@ -450,7 +450,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     stripe_data = None
     shopify_data = None
 
-    print(f"Northstar v1.2.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.3.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
