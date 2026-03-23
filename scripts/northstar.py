@@ -989,8 +989,12 @@ def cmd_activate(license_key: str):
     try:
         config = load_config(None)
     except FileNotFoundError:
-        print("Config not found. Run 'northstar setup' first.")
-        sys.exit(1)
+        # Bootstrap a minimal config so activate can work before setup
+        print("No config found. Creating minimal config...")
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        config = {"tier": "free", "license_key": None}
+        print(f"Config created at: {CONFIG_PATH}")
+        print("Run 'northstar setup' after activation to configure your data sources.")
 
     config["tier"] = tier
     config["license_key"] = key
