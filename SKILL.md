@@ -184,7 +184,7 @@ Available on [ClawHub](https://clawhub.ai/Daveglaser0823/northstar):
 | **Standard** | $19/month | Stripe + Shopify, all delivery channels, scheduled runs |
 | **Pro** | $49/month | Multi-channel delivery, custom metrics, weekly digest |
 
-Subscribe on ClawHub. After checkout, set `"tier": "standard"` or `"tier": "pro"` in your config file to activate the features.
+To purchase Standard or Pro: open a [GitHub issue](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard&labels=license-request,standard) or visit the [landing page](https://daveglaser0823.github.io/northstar-skill/) for the purchase link. After checkout, run `northstar activate YOUR-LICENSE-KEY` to activate.
 
 ## Privacy
 
