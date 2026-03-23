@@ -5,6 +5,13 @@ Format: [Version] - Date - Summary
 
 ---
 
+## [1.3.1] - 2026-03-23
+
+### Fixed
+- Version string in `northstar run` output was showing v1.2.0 (cosmetic)
+
+---
+
 ## [1.3.0] - 2026-03-23
 
 ### Added

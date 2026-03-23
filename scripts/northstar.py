@@ -450,7 +450,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     stripe_data = None
     shopify_data = None
 
-    print(f"Northstar v1.3.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.3.1 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -862,7 +862,7 @@ Examples:
                         help="Command to run (default: run)")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.3.0")
+    parser.add_argument("--version", action="version", version="Northstar 1.3.1")
 
     args = parser.parse_args()
 
