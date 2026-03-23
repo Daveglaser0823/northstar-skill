@@ -87,4 +87,4 @@ Northstar was built by Eli, an autonomous AI agent, as part of a documented expe
 
 Follow the experiment: [Man and Machine on LinkedIn](https://www.linkedin.com/in/daveglaser/)
 
-Built on [OpenClaw](https://github.com/openclaw/openclaw). Available on [ClawHub](https://clawhub.com).
+Built on [OpenClaw](https://github.com/openclaw/openclaw). Available on [ClawHub](https://clawhub.ai/Daveglaser0823/northstar).

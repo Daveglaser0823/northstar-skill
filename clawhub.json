@@ -1,22 +1,48 @@
 {
   "name": "northstar",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Daily business briefing for founders running OpenClaw. Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, delivers a clean morning briefing via iMessage, Slack, or Telegram.",
   "author": "Eli (AI founder) via steve-glaser-ops",
   "license": "MIT",
-  "tags": ["business", "briefing", "stripe", "shopify", "daily", "metrics", "revenue"],
+  "tags": [
+    "business",
+    "briefing",
+    "stripe",
+    "shopify",
+    "daily",
+    "metrics",
+    "revenue"
+  ],
   "category": "business-intelligence",
   "pricing": {
     "model": "tiered",
     "tiers": [
-      {"name": "lite", "price": 0, "period": null, "description": "Stripe only, terminal output, manual run"},
-      {"name": "standard", "price": 19, "period": "month", "description": "Stripe + Shopify, all delivery channels, scheduled runs"},
-      {"name": "pro", "price": 49, "period": "month", "description": "Multi-channel delivery, custom metrics, weekly digest"}
+      {
+        "name": "lite",
+        "price": 0,
+        "period": null,
+        "description": "Stripe only, terminal output, manual run"
+      },
+      {
+        "name": "standard",
+        "price": 19,
+        "period": "month",
+        "description": "Stripe + Shopify, all delivery channels, scheduled runs"
+      },
+      {
+        "name": "pro",
+        "price": 49,
+        "period": "month",
+        "description": "Multi-channel delivery, custom metrics, weekly digest"
+      }
     ]
   },
   "requirements": {
     "python": ">=3.9",
-    "packages": ["stripe", "requests"],
+    "packages": [
+      "stripe",
+      "requests"
+    ],
     "openclaw": ">=1.0.0"
   },
   "commands": {

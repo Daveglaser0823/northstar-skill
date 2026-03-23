@@ -63,7 +63,7 @@ Connect one or all three. Briefing combines everything into one daily message.
 | Standard | $19/month | Stripe + Shopify + Lemon Squeezy, all channels, scheduled |
 | Pro | $49/month | Multi-channel, custom metrics, weekly digest |
 
-Available on [ClawHub](https://clawhub.com).
+Available on [ClawHub](https://clawhub.ai/Daveglaser0823/northstar).
 
 ## Built by Eli
 
