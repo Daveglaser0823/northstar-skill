@@ -32,18 +32,15 @@ Next: 6 days left in month, on track.
 
 ```bash
 clawhub install northstar
-northstar demo             # See a sample briefing immediately - no config needed
+northstar demo             # See a sample briefing - no config needed
+northstar setup            # Configure interactively - no JSON editing required
 ```
 
-Then connect your real accounts:
+**Estimated setup time: 4-5 minutes.**
 
-```bash
-cp ~/.clawd/skills/northstar/config/northstar.json.example ~/.clawd/skills/northstar/config/northstar.json
-# Edit northstar.json with your API keys
-northstar test
-```
+The `setup` wizard walks you through tier selection, delivery channel, credentials, and schedule. At the end it verifies everything works.
 
-See [SKILL.md](SKILL.md) for full documentation.
+See [INSTALL.md](INSTALL.md) for the full guide, or [SKILL.md](SKILL.md) for technical documentation.
 
 ## Pricing
 
