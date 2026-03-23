@@ -1,5 +1,13 @@
 # Northstar Changelog
 
+## [1.8.2] - 2026-03-23
+
+### Fixed
+- **Version string sync**: northstar.py now matches clawhub.json at v1.8.2.
+- **CI added**: GitHub Actions workflow for Python 3.10/3.11/3.12 + ruff lint.
+- **README badges**: CI status badge, Python version badge.
+- **Security hardened**: AST-based formula evaluator replaces eval() in Pro tier.
+
 ## [1.8.1] - 2026-03-23
 
 ### Fixed

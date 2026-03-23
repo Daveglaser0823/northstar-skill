@@ -803,7 +803,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v1.8.1 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.8.2 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -1357,7 +1357,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.8.1")
+    parser.add_argument("--version", action="version", version="Northstar 1.8.2")
 
     args = parser.parse_args()
 
