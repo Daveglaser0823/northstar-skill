@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 1.7.0
+Version: 1.9.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
@@ -803,7 +803,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v1.8.2 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.9.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -873,32 +873,117 @@ def cmd_run(config: dict, dry_run: bool = False):
 
     print(f"  Done. Run #{state['runs']}.")
 
+def validate_polar_license(license_key: str, org_id: str) -> dict:
+    """
+    Validate a Polar.sh license key via the API.
+    Returns {"valid": bool, "tier": str or None, "error": str or None}.
+    See: https://polar.sh/docs/features/benefits/license-keys
+    """
+    import urllib.request
+    import urllib.error
+
+    POLAR_VALIDATE_URL = "https://api.polar.sh/v1/customer-portal/license-keys/validate"
+
+    payload = json.dumps({
+        "key": license_key,
+        "organization_id": org_id,
+    }).encode()
+
+    req = urllib.request.Request(
+        POLAR_VALIDATE_URL,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            # Polar returns the license key object on success.
+            # benefit_id or metadata tell us the tier.
+            # We check the key prefix as tier signal (NSS_ = standard, NSP_ = pro)
+            key_val = data.get("key", "").upper()
+            if key_val.startswith("NSS-"):
+                tier = "standard"
+            elif key_val.startswith("NSP-"):
+                tier = "pro"
+            else:
+                # Fallback: look in benefit properties
+                benefit = data.get("benefit", {})
+                props = benefit.get("properties", {})
+                tier = props.get("tier") or "standard"
+            return {"valid": True, "tier": tier, "error": None, "data": data}
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        if e.code == 404:
+            return {"valid": False, "tier": None, "error": "License key not found or not yet active."}
+        return {"valid": False, "tier": None, "error": f"Polar API error {e.code}: {body[:200]}"}
+    except Exception as e:
+        return {"valid": False, "tier": None, "error": f"Could not reach Polar API: {e}"}
+
+
 def cmd_activate(license_key: str):
     """Activate Standard or Pro tier with a license key."""
+    POLAR_STANDARD_URL = "https://polar.sh/daveglaser0823/northstar-standard"
+    POLAR_PRO_URL = "https://polar.sh/daveglaser0823/northstar-pro"
+
     if not license_key:
         print("Usage: northstar activate <license-key>")
         print()
         print("Purchase a license:")
-        print("  Standard ($19/month): https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard")
-        print("  Pro ($49/month):       https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Pro")
+        print(f"  Standard ($19/month): {POLAR_STANDARD_URL}")
+        print(f"  Pro ($49/month):       {POLAR_PRO_URL}")
         print()
-        print("Open a GitHub issue with your email. A license key is sent within 24 hours.")
+        print("After purchase, Polar emails you a license key automatically.")
+        print("Then run: northstar activate YOUR-KEY-HERE")
         return
 
-    # Validate license key format (basic check - real validation in POST-LAUNCH)
-    key = license_key.strip().upper()
-    valid_prefixes = {"NS-STD-": "standard", "NS-PRO-": "pro"}
-    tier = None
-    for prefix, t in valid_prefixes.items():
-        if key.startswith(prefix):
-            tier = t
-            break
+    key = license_key.strip()
 
-    if not tier:
-        print(f"Invalid license key format: {license_key}")
-        print("Keys start with NS-STD- (Standard) or NS-PRO- (Pro).")
-        print("Purchase at: https://github.com/Daveglaser0823/northstar-skill")
-        sys.exit(1)
+    # Detect tier from key prefix (NSS- = standard, NSP- = pro, legacy NS-STD- / NS-PRO- supported)
+    key_upper = key.upper()
+    tier = None
+    if key_upper.startswith("NSS-"):
+        tier = "standard"
+    elif key_upper.startswith("NSP-"):
+        tier = "pro"
+    elif key_upper.startswith("NS-STD-"):
+        tier = "standard"
+    elif key_upper.startswith("NS-PRO-"):
+        tier = "pro"
+
+    # --- Polar API validation (if org_id is configured) ---
+    # Try to load org_id from a local config file (set by Steve during onboarding)
+    polar_config_path = Path(__file__).parent.parent / "config" / "polar.json"
+    org_id = None
+    if polar_config_path.exists():
+        try:
+            pc = json.loads(polar_config_path.read_text())
+            org_id = pc.get("organization_id")
+        except Exception:
+            pass
+
+    if org_id:
+        print(f"Validating license key with Polar...", end=" ", flush=True)
+        result = validate_polar_license(key, org_id)
+        if not result["valid"]:
+            print("FAILED")
+            print(f"\nError: {result['error']}")
+            print()
+            print("If you just purchased, wait a moment and try again.")
+            print(f"Support: https://github.com/Daveglaser0823/northstar-skill/issues")
+            sys.exit(1)
+        print("OK")
+        # Use tier from Polar if we couldn't detect from prefix
+        if not tier and result["tier"]:
+            tier = result["tier"]
+    else:
+        # Offline mode: validate format only
+        if not tier:
+            print(f"Invalid license key format: {license_key}")
+            print("Keys start with NSS- (Standard) or NSP- (Pro).")
+            print(f"Purchase at: {POLAR_STANDARD_URL}")
+            sys.exit(1)
 
     # Load config and apply tier
     try:
@@ -957,7 +1042,7 @@ def cmd_status(config: dict):
     if tier == "lite":
         print()
         print("Upgrade to Standard ($19/month):")
-        print("  https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard")
+        print("  https://polar.sh/daveglaser0823/northstar-standard")
 
 def cmd_stripe(config: dict):
     """Show raw Stripe data (debug)."""
@@ -1357,7 +1442,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 1.8.2")
+    parser.add_argument("--version", action="version", version="Northstar 1.9.0")
 
     args = parser.parse_args()
 

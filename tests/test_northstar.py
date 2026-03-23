@@ -301,7 +301,7 @@ class TestActivateCommand(unittest.TestCase):
             cmd_activate("")
         output = buf.getvalue()
         self.assertIn("Usage: northstar activate", output)
-        self.assertIn("github.com/Daveglaser0823/northstar-skill", output)
+        self.assertIn("polar.sh/daveglaser0823/northstar-standard", output)
 
     def test_activate_std_key_validates(self):
         """NS-STD- prefix correctly identified as standard tier."""
