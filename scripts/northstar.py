@@ -727,7 +727,9 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
 def deliver(message: str, config: dict, dry_run: bool = False) -> bool:
     """Send the briefing via configured channel."""
     channel = config.get("delivery", {}).get("channel", "none")
-    recipient = config.get("delivery", {}).get("recipient", "")
+    # Support both 'recipient' and legacy 'imessage_recipient' keys
+    delivery = config.get("delivery", {})
+    recipient = delivery.get("recipient", "") or delivery.get("imessage_recipient", "")
 
     if dry_run or channel == "none":
         print("\n--- BRIEFING (dry run) ---")
@@ -801,7 +803,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v1.5.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v1.8.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):

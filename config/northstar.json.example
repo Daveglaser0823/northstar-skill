@@ -9,6 +9,7 @@
     "channel": "imessage",
     "channels": ["imessage", "slack"],
 
+    "recipient": "+15551234567",
     "imessage_recipient": "+15551234567",
     "slack_webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
     "telegram_chat_id": "",

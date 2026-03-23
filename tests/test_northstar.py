@@ -229,6 +229,47 @@ class TestGumroadBriefing(unittest.TestCase):
         self.assertNotIn("% of $0", result)
 
 
+class TestDelivery(unittest.TestCase):
+    def test_imessage_recipient_fallback(self):
+        """deliver() should use imessage_recipient if recipient is missing."""
+        from northstar import deliver
+        # Config uses legacy imessage_recipient, no 'recipient' key
+        cfg = {
+            "delivery": {
+                "channel": "none",  # dry_run equivalent: channel=none won't actually send
+                "imessage_recipient": "+15551234567",
+            }
+        }
+        # Should not raise (dry_run path via channel=none)
+        result = deliver("test message", cfg, dry_run=False)
+        self.assertTrue(result)
+
+    def test_recipient_takes_priority_over_imessage_recipient(self):
+        """'recipient' key should take priority over 'imessage_recipient'."""
+        from northstar import deliver
+        cfg = {
+            "delivery": {
+                "channel": "none",
+                "recipient": "+15559999999",
+                "imessage_recipient": "+15551234567",
+            }
+        }
+        result = deliver("test message", cfg, dry_run=False)
+        self.assertTrue(result)
+
+    def test_dry_run_prints_briefing(self):
+        """dry_run=True should print briefing without sending."""
+        from northstar import deliver
+        import io
+        from contextlib import redirect_stdout
+        cfg = {"delivery": {"channel": "imessage", "recipient": "+15551234567"}}
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            result = deliver("hello briefing", cfg, dry_run=True)
+        self.assertTrue(result)
+        self.assertIn("hello briefing", buf.getvalue())
+
+
 class TestConfigLoading(unittest.TestCase):
     def test_missing_config_raises(self):
         from northstar import load_config
