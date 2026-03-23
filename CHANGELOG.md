@@ -1,5 +1,15 @@
 # Northstar Changelog
 
+## [1.8.1] - 2026-03-23
+
+### Fixed
+- **Version display bug**: `northstar` status command showed v1.5.0 instead of v1.8.0. Fixed.
+- **iMessage config key fallback**: `deliver()` now accepts both `recipient` and legacy `imessage_recipient` config keys. Users who manually copied the config example and used `imessage_recipient` would have silently failed to receive briefings. Now both keys work; `recipient` takes priority.
+- **Config example**: Added `recipient` alongside `imessage_recipient` in `northstar.json.example` to avoid user confusion.
+- **Test coverage**: Added 3 new delivery tests (30 total, was 27). Tests cover `imessage_recipient` fallback, `recipient` priority, and dry-run output.
+
+---
+
 ## [1.8.0] - 2026-03-23
 
 ### Added
