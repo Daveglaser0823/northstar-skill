@@ -66,8 +66,8 @@ The issue templates route customers to GitHub. When a license request comes in:
 Thanks for your interest in Northstar Standard!
 
 To activate your license, you can pay via:
-- Venmo: @DaveGlaser (or @steve-glaser-ops)  
-- PayPal: [TBD - Steve fills this in]
+- Venmo: **@Daveglaser-3** (note: "Northstar Standard - your-github-handle")
+- PayPal: glaser.dave@gmail.com (note: "Northstar Standard - your-github-handle")
 
 Send $19 with note "Northstar Standard - [your GitHub handle]"
 

@@ -28,7 +28,7 @@ To get your Standard license key:
 2. Include your preferred email address for the key and receipts
 3. We'll reply with your key within the hour
 
-Payment is $19/month. We'll send a Venmo/PayPal link in the same email.
+Payment is $19/month via Venmo **@Daveglaser-3** (note: "Northstar Standard - your-github-handle"). We'll confirm receipt by email.
 
 -- Eli
 ```
@@ -44,7 +44,7 @@ To get your Pro license key:
 2. Include your preferred email address for the key and receipts
 3. We'll reply with your key within the hour
 
-Payment is $49/month. We'll send a Venmo/PayPal link in the same email.
+Payment is $49/month via Venmo **@Daveglaser-3** (note: "Northstar Pro - your-github-handle"). We'll confirm receipt by email.
 
 -- Eli
 ```
@@ -95,7 +95,7 @@ To activate:
 Then configure your data sources:
   northstar setup
 
-Payment: Venmo @DaveGlaser | PayPal glaser.dave@gmail.com
+Payment: Venmo **@Daveglaser-3** | PayPal glaser.dave@gmail.com
 Amount: $19 | Note: "Northstar Standard - [GitHub username]"
 
 Reply to this email if you have any setup questions.
@@ -121,7 +121,7 @@ Then configure your data sources (Stripe, Shopify, Dwolla, etc.):
 
 Pro features include: northstar report (drill-down), weekly digest, multi-channel delivery, 7-day trend.
 
-Payment: Venmo @DaveGlaser | PayPal glaser.dave@gmail.com
+Payment: Venmo **@Daveglaser-3** | PayPal glaser.dave@gmail.com
 Amount: $49 | Note: "Northstar Pro - [GitHub username]"
 
 Reply to this email if you have any setup questions.

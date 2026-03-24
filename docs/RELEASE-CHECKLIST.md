@@ -1,0 +1,84 @@
+# RELEASE-CHECKLIST.md
+*Required before ANY code, doc, or config change is pushed to production or published to ClawHub.*
+*Created by Eli | March 24, 2026 (Board action item)*
+
+---
+
+## Pre-Release Checklist
+
+Complete every item. Do not skip. Check the box and note any issues found.
+
+### 1. Smoke Test (User Journey)
+Walk through the full end-to-end path as a NEW user (not as the developer):
+
+- [ ] **Install:** `pip install northstar` (or `clawhub install northstar`) -- does it succeed cleanly?
+- [ ] **Setup:** `northstar setup` -- does it prompt correctly for API keys?
+- [ ] **Run:** `northstar` or `northstar demo` -- does it produce expected output?
+- [ ] **Activate:** `northstar activate [KEY]` -- does activation succeed with a clear success message?
+- [ ] **License request flow:** Open a GitHub issue using the template -- does the form load correctly with the right fields?
+- [ ] **Payment path:** Read the README Subscribe section. Is the Venmo handle `@Daveglaser-3`? Is the amount correct?
+
+### 2. Doc Consistency Check
+```bash
+grep -rn "Venmo\|venmo" . --include="*.md" | grep -v ".git"
+```
+- [ ] All Venmo references show `@Daveglaser-3` (not `@DaveGlaser`, not `@Dave-Glaser-3`)
+- [ ] All payment amounts are consistent with PAYMENT.md (Standard: $19, Pro: $49)
+
+```bash
+grep -rn "payment link\|a link\|send a link" . --include="*.md" | grep -v ".git"
+```
+- [ ] No templates promise "a payment link" -- the payment method is Venmo/PayPal, not a link
+
+### 3. README Accuracy Check
+- [ ] Every command in the README actually works when copy-pasted into a fresh terminal
+- [ ] The `northstar activate` command format matches the actual activation code
+- [ ] The Subscribe section matches PAYMENT.md exactly
+
+### 4. Fresh Install Test
+```bash
+rm -f ~/.config/northstar.json ~/northstar-config.json
+northstar  # should ask for setup, not crash
+```
+- [ ] Fresh install prompts for setup cleanly
+- [ ] No hardcoded credentials or stale config leaks
+
+### 5. Error Message Review
+Run these and check the output message is clear to a non-technical user:
+- [ ] `northstar activate INVALID-KEY` -- does the error make sense?
+- [ ] `northstar` without any config -- does it guide the user?
+- [ ] `northstar activate` with no arguments -- does it explain usage?
+
+### 6. AI/Docs Single Source of Truth
+Before shipping any doc update:
+- [ ] Does the change introduce a NEW reference to payment info? If yes, does it come from PAYMENT.md?
+- [ ] Is there any doc (template, email draft, README) that still contains a payment handle not matching PAYMENT.md?
+
+### 7. Changelog Entry
+- [ ] `CHANGELOG.md` has an entry for this version
+- [ ] Entry includes: version, date, what changed, and "Tested by: [Eli/Steve]"
+
+### 8. ClawHub Publish (if applicable)
+- [ ] Run `clawhub publish` after all fixes are committed and pushed
+- [ ] Verify the new version is live: `curl -s "https://api.clawhub.ai/api/v1/skills/northstar" | python3 -m json.tool | grep version`
+- [ ] Check for security warnings: `curl -s "https://api.clawhub.ai/api/v1/skills/northstar" | python3 -m json.tool | grep verdict`
+
+---
+
+## Incident Response (When a Bug Is Reported)
+
+1. **Acknowledge within 1 hour** -- reply to the GitHub issue, email, or thread
+2. **Root cause analysis in daily log:**
+   - What broke?
+   - Why didn't tests catch it? (unit tests, smoke tests, doc checks)
+   - What change prevents recurrence?
+3. **Fix, test the fix with this checklist, deploy**
+4. **Update this checklist** if the bug class wasn't covered
+
+---
+
+## Change History
+
+| Date | Change | Author |
+|------|--------|--------|
+| March 24, 2026 | Created per board action item (Ryan Venmo incident) | Eli |
