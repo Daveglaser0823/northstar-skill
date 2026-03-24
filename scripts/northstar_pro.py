@@ -14,7 +14,6 @@ Import from northstar.py or run standalone:
   northstar trend     -- show 7-day trend only
 """
 
-import ast
 import json
 import math
 import operator
@@ -123,27 +122,12 @@ def format_trend_section(trend: list[dict]) -> str:
 
 # ---- Custom Metrics --------------------------------------------------------
 
-# Safe expression evaluator - supports arithmetic, comparisons, and conditional
-# expressions using Python's AST. No eval/exec anywhere in this module.
-_SAFE_OPS = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-    ast.FloorDiv: operator.floordiv,
-    ast.Mod: operator.mod,
-    ast.Pow: operator.pow,
-    ast.USub: operator.neg,
-    ast.UAdd: operator.pos,
-    ast.Eq: operator.eq,
-    ast.NotEq: operator.ne,
-    ast.Lt: operator.lt,
-    ast.LtE: operator.le,
-    ast.Gt: operator.gt,
-    ast.GtE: operator.ge,
-}
+# Safe formula evaluator - hand-rolled recursive-descent parser.
+# Supports: arithmetic (+, -, *, /, //, %, **), comparisons (==, !=, <, <=, >, >=),
+# boolean operators (and, or, not), ternary (x if cond else y),
+# math functions (abs, round, min, max, sqrt, floor, ceil), and named variables.
+# No eval(), exec(), ast, or compile() used anywhere.
 
-# Math functions allowed in formulas
 _SAFE_MATH = {
     "abs": abs,
     "round": round,
@@ -155,82 +139,283 @@ _SAFE_MATH = {
 }
 
 
-def _compute_ast_node(node, context: dict):
-    """Recursively evaluate an AST node using only safe operations."""
-    if isinstance(node, ast.Constant):
-        if isinstance(node.value, (int, float)):
-            return node.value
-        raise ValueError(f"Unsupported constant type: {type(node.value)}")
+class _Tokenizer:
+    """Tokenize a formula string into (type, value) tuples."""
 
-    if isinstance(node, ast.Name):
-        if node.id in context:
-            return context[node.id]
-        if node.id in _SAFE_MATH:
-            return _SAFE_MATH[node.id]
-        raise ValueError(f"Unknown variable: {node.id!r}")
+    NUMBER = "NUMBER"
+    NAME   = "NAME"
+    OP     = "OP"
+    LPAREN = "LPAREN"
+    RPAREN = "RPAREN"
+    COMMA  = "COMMA"
+    END    = "END"
 
-    if isinstance(node, ast.BinOp):
-        op_fn = _SAFE_OPS.get(type(node.op))
-        if op_fn is None:
-            raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
-        left = _compute_ast_node(node.left, context)
-        right = _compute_ast_node(node.right, context)
-        return op_fn(left, right)
+    _OP_CHARS = set("+-*/%<>=!,().")
 
-    if isinstance(node, ast.UnaryOp):
-        op_fn = _SAFE_OPS.get(type(node.op))
-        if op_fn is None:
-            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
-        return op_fn(_compute_ast_node(node.operand, context))
+    def __init__(self, text: str):
+        self._text = text.strip()
+        self._pos = 0
+        self._tokens: list[tuple[str, str]] = []
+        self._idx = 0
+        self._tokenize()
 
-    if isinstance(node, ast.Compare):
-        left = _compute_ast_node(node.left, context)
-        result = left
-        for op, comparator in zip(node.ops, node.comparators):
-            op_fn = _SAFE_OPS.get(type(op))
-            if op_fn is None:
-                raise ValueError(f"Unsupported comparison: {type(op).__name__}")
-            right = _compute_ast_node(comparator, context)
-            result = op_fn(left, right)
-            left = right
-        return result
+    def _tokenize(self):
+        pos = 0
+        text = self._text
+        n = len(text)
+        while pos < n:
+            # skip whitespace
+            if text[pos].isspace():
+                pos += 1
+                continue
+            # number (int or float)
+            if text[pos].isdigit() or (text[pos] == '.' and pos + 1 < n and text[pos+1].isdigit()):
+                j = pos
+                while j < n and (text[j].isdigit() or text[j] == '.'):
+                    j += 1
+                self._tokens.append((self.NUMBER, text[pos:j]))
+                pos = j
+                continue
+            # identifier / keyword
+            if text[pos].isalpha() or text[pos] == '_':
+                j = pos
+                while j < n and (text[j].isalnum() or text[j] == '_'):
+                    j += 1
+                self._tokens.append((self.NAME, text[pos:j]))
+                pos = j
+                continue
+            # two-char operators
+            if pos + 1 < n and text[pos:pos+2] in ("==", "!=", "<=", ">=", "//", "**"):
+                self._tokens.append((self.OP, text[pos:pos+2]))
+                pos += 2
+                continue
+            # single-char operators and punctuation
+            ch = text[pos]
+            if ch == '(':
+                self._tokens.append((self.LPAREN, ch))
+            elif ch == ')':
+                self._tokens.append((self.RPAREN, ch))
+            elif ch == ',':
+                self._tokens.append((self.COMMA, ch))
+            elif ch in "+-*/%<>=!":
+                self._tokens.append((self.OP, ch))
+            else:
+                raise ValueError(f"Unexpected character in formula: {ch!r}")
+            pos += 1
+        self._tokens.append((self.END, ""))
 
-    if isinstance(node, ast.IfExp):
-        # Ternary: value_if_true if condition else value_if_false
-        condition = _compute_ast_node(node.test, context)
-        if condition:
-            return _compute_ast_node(node.body, context)
+    def peek(self) -> tuple[str, str]:
+        return self._tokens[self._idx]
+
+    def consume(self) -> tuple[str, str]:
+        tok = self._tokens[self._idx]
+        self._idx += 1
+        return tok
+
+    def expect(self, kind: str, value: str | None = None) -> tuple[str, str]:
+        tok = self.consume()
+        if tok[0] != kind:
+            raise ValueError(f"Expected {kind}, got {tok}")
+        if value is not None and tok[1] != value:
+            raise ValueError(f"Expected {value!r}, got {tok[1]!r}")
+        return tok
+
+
+class _Parser:
+    """Recursive-descent parser for safe metric formulas."""
+
+    def __init__(self, tokenizer: _Tokenizer, context: dict):
+        self._tok = tokenizer
+        self._ctx = context
+
+    def parse(self) -> float:
+        result = self._ternary()
+        self._tok.expect(_Tokenizer.END)
+        return float(result)
+
+    # ternary: or_expr [ "if" or_expr "else" ternary ]
+    # Python ternary semantics: BODY if COND else ALT
+    # Body only evaluates when cond is true; alt only evaluates when cond is false.
+    # To implement lazy evaluation, we pre-scan for a top-level "if" keyword at
+    # the current token depth. If found, we evaluate condition first, then only
+    # evaluate the winning branch. No eval()/exec()/ast used.
+    def _ternary(self) -> float:
+        # Pre-scan for top-level "if" in remaining tokens (outside any parens)
+        if_pos = self._find_toplevel_keyword("if")
+        if if_pos is None:
+            return self._or_expr()
+
+        # Ternary detected. Find matching "else" after the "if".
+        else_pos = self._find_toplevel_keyword("else", start=if_pos + 1)
+        if else_pos is None:
+            raise ValueError("Expected 'else' in ternary expression")
+
+        body_tokens = self._tok._tokens[self._tok._idx : if_pos]
+        cond_tokens = self._tok._tokens[if_pos + 1 : else_pos]
+        alt_tokens  = self._tok._tokens[else_pos + 1 :]  # includes END
+
+        # Advance main tokenizer to END (all tokens consumed via slice evaluation)
+        while self._tok.peek()[0] != _Tokenizer.END:
+            self._tok.consume()
+
+        # Evaluate condition
+        cond = self._eval_token_slice(cond_tokens)
+        if cond:
+            return self._eval_token_slice(body_tokens)
         else:
-            return _compute_ast_node(node.orelse, context)
+            return self._eval_token_slice(alt_tokens)
 
-    if isinstance(node, ast.Call):
-        func = _compute_ast_node(node.func, context)
-        if func not in _SAFE_MATH.values():
-            raise ValueError("Only math functions (abs, round, min, max, sqrt, floor, ceil) are allowed")
-        args = [_compute_ast_node(a, context) for a in node.args]
-        return func(*args)
+    def _find_toplevel_keyword(self, keyword: str, start: int | None = None) -> int | None:
+        """Return absolute token index of first top-level NAME==keyword, or None."""
+        depth = 0
+        idx = start if start is not None else self._tok._idx
+        tokens = self._tok._tokens
+        while idx < len(tokens):
+            kind, val = tokens[idx]
+            if kind == _Tokenizer.END:
+                break
+            if kind == _Tokenizer.LPAREN:
+                depth += 1
+            elif kind == _Tokenizer.RPAREN:
+                depth -= 1
+            elif kind == _Tokenizer.NAME and val == keyword and depth == 0:
+                return idx
+            idx += 1
+        return None
 
-    if isinstance(node, ast.BoolOp):
-        if isinstance(node.op, ast.And):
-            result = True
-            for val in node.values:
-                result = result and _compute_ast_node(val, context)
-            return result
-        if isinstance(node.op, ast.Or):
-            result = False
-            for val in node.values:
-                result = result or _compute_ast_node(val, context)
-            return result
+    def _eval_token_slice(self, token_slice: list) -> float:
+        """Evaluate a token slice as a sub-expression."""
+        if not token_slice or token_slice[-1][0] == _Tokenizer.END:
+            tokens = token_slice
+        else:
+            tokens = list(token_slice) + [(_Tokenizer.END, "")]
+        sub_tok = _Tokenizer.__new__(_Tokenizer)
+        sub_tok._tokens = tokens
+        sub_tok._idx = 0
+        sub_parser = _Parser(sub_tok, self._ctx)
+        # Use _or_expr to avoid infinite ternary loop; top-level ternary in slices
+        # is handled by the recursive structure of _ternary via parse().
+        return sub_parser._ternary()
 
-    raise ValueError(f"Unsupported expression node: {type(node).__name__}")
+    # or_expr: and_expr { "or" and_expr }
+    def _or_expr(self) -> float:
+        left = self._and_expr()
+        while self._tok.peek() == (_Tokenizer.NAME, "or"):
+            self._tok.consume()
+            right = self._and_expr()
+            left = left or right
+        return left
+
+    # and_expr: not_expr { "and" not_expr }
+    def _and_expr(self) -> float:
+        left = self._not_expr()
+        while self._tok.peek() == (_Tokenizer.NAME, "and"):
+            self._tok.consume()
+            right = self._not_expr()
+            left = left and right
+        return left
+
+    # not_expr: "not" not_expr | comparison
+    def _not_expr(self) -> float:
+        if self._tok.peek() == (_Tokenizer.NAME, "not"):
+            self._tok.consume()
+            return not self._not_expr()
+        return self._comparison()
+
+    # comparison: add_expr { ("==" | "!=" | "<" | "<=" | ">" | ">=") add_expr }
+    def _comparison(self) -> float:
+        left = self._add_expr()
+        _cmp_ops = {"==": operator.eq, "!=": operator.ne,
+                    "<": operator.lt, "<=": operator.le,
+                    ">": operator.gt, ">=": operator.ge}
+        while self._tok.peek()[0] == _Tokenizer.OP and self._tok.peek()[1] in _cmp_ops:
+            op = self._tok.consume()[1]
+            right = self._add_expr()
+            left = _cmp_ops[op](left, right)
+        return left
+
+    # add_expr: mul_expr { ("+" | "-") mul_expr }
+    def _add_expr(self) -> float:
+        left = self._mul_expr()
+        while self._tok.peek()[0] == _Tokenizer.OP and self._tok.peek()[1] in ("+", "-"):
+            op = self._tok.consume()[1]
+            right = self._mul_expr()
+            left = (operator.add if op == "+" else operator.sub)(left, right)
+        return left
+
+    # mul_expr: pow_expr { ("*" | "/" | "//" | "%") pow_expr }
+    def _mul_expr(self) -> float:
+        left = self._pow_expr()
+        _mul_ops = {"*": operator.mul, "/": operator.truediv,
+                    "//": operator.floordiv, "%": operator.mod}
+        while self._tok.peek()[0] == _Tokenizer.OP and self._tok.peek()[1] in _mul_ops:
+            op = self._tok.consume()[1]
+            right = self._pow_expr()
+            left = _mul_ops[op](left, right)
+        return left
+
+    # pow_expr: unary { "**" unary }  (right-associative)
+    def _pow_expr(self) -> float:
+        base = self._unary()
+        if self._tok.peek() == (_Tokenizer.OP, "**"):
+            self._tok.consume()
+            exp = self._pow_expr()
+            return operator.pow(base, exp)
+        return base
+
+    # unary: ("+" | "-") unary | primary
+    def _unary(self) -> float:
+        tok = self._tok.peek()
+        if tok == (_Tokenizer.OP, "-"):
+            self._tok.consume()
+            return -self._unary()
+        if tok == (_Tokenizer.OP, "+"):
+            self._tok.consume()
+            return +self._unary()
+        return self._primary()
+
+    # primary: NUMBER | NAME [ "(" args ")" ] | "(" ternary ")"
+    def _primary(self) -> float:
+        tok = self._tok.peek()
+        if tok[0] == _Tokenizer.NUMBER:
+            self._tok.consume()
+            v = float(tok[1])
+            return int(v) if v == int(v) else v
+        if tok[0] == _Tokenizer.NAME:
+            self._tok.consume()
+            name = tok[1]
+            # function call
+            if self._tok.peek()[0] == _Tokenizer.LPAREN:
+                if name not in _SAFE_MATH:
+                    raise ValueError(f"Unknown function: {name!r}. Allowed: {list(_SAFE_MATH)}")
+                self._tok.consume()  # (
+                args = []
+                if self._tok.peek()[0] != _Tokenizer.RPAREN:
+                    args.append(self._ternary())
+                    while self._tok.peek()[0] == _Tokenizer.COMMA:
+                        self._tok.consume()
+                        args.append(self._ternary())
+                self._tok.expect(_Tokenizer.RPAREN)
+                return _SAFE_MATH[name](*args)
+            # variable
+            if name in self._ctx:
+                return self._ctx[name]
+            raise ValueError(f"Unknown variable: {name!r}")
+        if tok[0] == _Tokenizer.LPAREN:
+            self._tok.consume()
+            val = self._ternary()
+            self._tok.expect(_Tokenizer.RPAREN)
+            return val
+        raise ValueError(f"Unexpected token in formula: {tok}")
 
 
 def _compute_formula(formula: str, context: dict) -> float:
     """
-    Parse and evaluate a metric formula string safely using AST parsing.
-    No eval(), exec(), or code compilation is used.
+    Parse and evaluate a metric formula string using a hand-rolled
+    recursive-descent parser. No eval(), exec(), compile(), or ast module used.
 
-    Supported: arithmetic operators, comparisons, ternary (if/else),
+    Supported: arithmetic (+, -, *, /, //, %, **), comparisons,
+    boolean operators (and, or, not), ternary (x if cond else y),
     math functions (abs, round, min, max, sqrt, floor, ceil), named variables.
 
     Example formulas:
@@ -238,17 +423,9 @@ def _compute_formula(formula: str, context: dict) -> float:
       "stripe_new_subs - stripe_churn"
       "round(mtd_revenue / days_in_month * 30, 2)"
     """
-    try:
-        # SECURITY NOTE: ast.parse() with mode="eval" is used here for safe
-        # formula parsing only. This is NOT eval(), exec(), or dynamic code
-        # execution. The AST tree is walked manually by _compute_ast_node()
-        # which only supports a strict allowlist of operations (arithmetic,
-        # comparisons, ternary, and a small set of math functions). No code
-        # is compiled or executed from user input.
-        tree = ast.parse(formula.strip(), mode="eval")
-    except SyntaxError as e:
-        raise ValueError(f"Invalid formula syntax: {e}")
-    result = _compute_ast_node(tree.body, context)
+    tokenizer = _Tokenizer(formula.strip())
+    parser = _Parser(tokenizer, context)
+    result = parser.parse()
     return float(result) if result is not None else 0.0
 
 

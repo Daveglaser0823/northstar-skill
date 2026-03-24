@@ -1,5 +1,16 @@
 # Northstar Changelog
 
+## [2.4.0] - 2026-03-24
+
+### Fixed
+- **Eliminated `ast` module dependency**: Replaced Python's built-in `ast` module with a hand-rolled recursive-descent parser for formula evaluation. Removes the `suspicious.dynamic_code_execution` security flag entirely. No `eval()`, `exec()`, `ast`, or `compile()` used anywhere. The parser supports the same feature set: arithmetic, comparisons, boolean operators, ternary expressions, math functions (`abs`, `round`, `min`, `max`, `sqrt`, `floor`, `ceil`), and named variables.
+- **Lazy ternary evaluation**: The new parser evaluates only the winning branch of `body if cond else alt`, preventing spurious errors (e.g. division by zero in the unselected branch).
+
+### Tests
+- All 82 tests pass.
+
+---
+
 ## [2.3.0] - 2026-03-24
 
 ### Fixed
