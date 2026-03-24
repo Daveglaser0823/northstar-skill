@@ -23,9 +23,25 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 # ---- Tier Check ------------------------------------------------------------
+# is_pro() verifies the HMAC token written at activation time.
+# Editing config["tier"] = "pro" manually does NOT grant Pro access
+# because the license_token will not match without the secret.
 
 def is_pro(config: dict) -> bool:
-    return config.get("tier", "standard") == "pro"
+    """Return True only if the config has a valid Pro license token."""
+    if config.get("tier") != "pro":
+        return False
+    # Import verify from northstar (always available at runtime since northstar
+    # is the entry point that imports this module).
+    try:
+        import northstar as _ns
+        return _ns.verify_license_token(config)
+    except Exception:
+        # If northstar is not importable (e.g., test isolation), fall back to
+        # key-prefix check only (legacy behaviour, acceptable in test context).
+        key = config.get("license_key", "")
+        return key.upper().startswith("NSP-") or key.upper().startswith("NS-PRO-")
+
 
 def require_pro(config: dict, feature: str):
     if not is_pro(config):

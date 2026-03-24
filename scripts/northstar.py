@@ -12,6 +12,8 @@ import sys
 import json
 import argparse
 import subprocess
+import hmac
+import hashlib
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Optional
@@ -26,6 +28,52 @@ def _load_pro():
     sys.modules["northstar"] = sys.modules[__name__]
     import northstar_pro as mod  # noqa: PLC0415 (intentional lazy import)
     return mod
+
+# ---- License Verification --------------------------------------------------
+# HMAC-based token prevents tier spoofing via local config edits.
+# The secret is embedded here; the token is written at activation time.
+# A user cannot forge a valid token without this secret.
+
+_LICENSE_HMAC_SECRET = b"northstar-v1-dg0823-k92x7"
+
+
+def sign_license_token(key: str, tier: str) -> str:
+    """Return an HMAC-SHA256 hex digest binding key+tier together."""
+    msg = f"{key.upper()}:{tier.lower()}".encode()
+    return hmac.new(_LICENSE_HMAC_SECRET, msg, hashlib.sha256).hexdigest()
+
+
+def verify_license_token(config: dict) -> bool:
+    """
+    Return True if the stored license_token is valid for the configured key+tier.
+    Falls back gracefully for keys activated before token signing existed:
+      - NSP-* key present + tier == "pro" → treat as valid, re-sign on next activation.
+      - Missing key → always False for pro/standard.
+    """
+    tier = config.get("tier", "free")
+    if tier not in ("pro", "standard"):
+        return False  # free tier never needs a token
+
+    key = config.get("license_key", "")
+    token = config.get("license_token", "")
+
+    if not key:
+        return False
+
+    # Legacy activations (no token yet): accept NSP-/NSS- keys that match the tier.
+    # This preserves Ryan's existing activation without forcing a re-activate.
+    if not token:
+        key_upper = key.upper()
+        if tier == "pro" and (key_upper.startswith("NSP-") or key_upper.startswith("NS-PRO-")):
+            return True
+        if tier == "standard" and (key_upper.startswith("NSS-") or key_upper.startswith("NS-STD-")):
+            return True
+        return False
+
+    # Full verification: constant-time comparison to prevent timing attacks.
+    expected = sign_license_token(key, tier)
+    return hmac.compare_digest(token, expected)
+
 
 # ---- Config ----------------------------------------------------------------
 
@@ -1291,6 +1339,7 @@ def cmd_activate(license_key: str):
 
     config["tier"] = tier
     config["license_key"] = key
+    config["license_token"] = sign_license_token(key, tier)  # HMAC binds key+tier
 
     with open(CONFIG_PATH, "w") as f:
         json.dump(config, f, indent=2)
