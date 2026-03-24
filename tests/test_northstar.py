@@ -356,6 +356,43 @@ class TestDelivery(unittest.TestCase):
         self.assertIn("hello briefing", buf.getvalue())
 
 
+    def test_email_delivery_missing_credentials_raises(self):
+        """Email delivery with missing credentials should raise ValueError."""
+        from northstar import deliver
+        cfg = {
+            "delivery": {
+                "channel": "email",
+                "email_to": "",  # missing
+                "smtp_user": "",
+                "smtp_password": "",
+            }
+        }
+        with self.assertRaises(ValueError) as cm:
+            deliver("test", cfg)
+        self.assertIn("smtp_user", str(cm.exception))
+
+    def test_email_delivery_dry_run_bypasses_smtp(self):
+        """dry_run=True with email channel should print without connecting to SMTP."""
+        from northstar import deliver
+        import io
+        from contextlib import redirect_stdout
+        cfg = {
+            "delivery": {
+                "channel": "email",
+                "email_to": "user@example.com",
+                "smtp_user": "sender@gmail.com",
+                "smtp_password": "fakepassword",
+                "smtp_host": "smtp.gmail.com",
+                "smtp_port": 587,
+            }
+        }
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            result = deliver("email test message", cfg, dry_run=True)
+        self.assertTrue(result)
+        self.assertIn("email test message", buf.getvalue())
+
+
 class TestConfigLoading(unittest.TestCase):
     def test_missing_config_raises(self):
         from northstar import load_config

@@ -5,7 +5,7 @@ Version: 2.1.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, Gumroad, and Dwolla metrics, formats a daily briefing,
-and delivers it via iMessage, Slack, or Telegram.
+and delivers it via iMessage, Slack, Telegram, or Email.
 """
 
 import sys
@@ -1033,6 +1033,33 @@ end tell
         with urllib.request.urlopen(req) as resp:
             return resp.status == 200
 
+    elif channel == "email":
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        smtp_host = delivery.get("smtp_host", "smtp.gmail.com")
+        smtp_port = int(delivery.get("smtp_port", 587))
+        smtp_user = delivery.get("smtp_user", "")
+        smtp_password = delivery.get("smtp_password", "")
+        email_to = delivery.get("email_to", "") or recipient
+        email_from = delivery.get("email_from", smtp_user)
+        if not smtp_user or not smtp_password or not email_to:
+            raise ValueError("Email delivery requires smtp_user, smtp_password, and email_to in config.")
+        now = datetime.now()
+        subject = f"Northstar Briefing - {now.strftime('%B %-d, %Y')}"
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = email_from
+        msg["To"] = email_to
+        # Plain text version
+        msg.attach(MIMEText(message, "plain"))
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(email_from, email_to, msg.as_string())
+        return True
+
     else:
         raise ValueError(f"Unknown delivery channel: {channel}")
 
@@ -1475,14 +1502,15 @@ def cmd_setup():
             print("             (NOT AVAILABLE on your system - use Slack or Telegram instead)")
         print("  slack     - Any OS. Requires a Slack webhook URL.")
         print("  telegram  - Any OS. Requires a Telegram bot token and chat ID.")
+        print("  email     - Any OS. Sends via SMTP (Gmail, etc). Works everywhere.")
         print("  none      - Terminal output only (for testing).")
         print()
-        _default_channel = "imessage" if _is_mac else "slack"
+        _default_channel = "imessage" if _is_mac else "email"
         while True:
             channel = ask("Delivery channel", default=_default_channel).lower()
-            if channel in ("imessage", "slack", "telegram", "none"):
+            if channel in ("imessage", "slack", "telegram", "email", "none"):
                 break
-            print("  Enter 'imessage', 'slack', 'telegram', or 'none'.")
+            print("  Enter 'imessage', 'slack', 'telegram', 'email', or 'none'.")
         delivery: dict = {"channel": channel}
 
         if channel == "imessage":
@@ -1510,18 +1538,40 @@ def cmd_setup():
             delivery["telegram_bot_token"] = bot_token
             delivery["telegram_chat_id"] = chat_id
 
+        elif channel == "email":
+            print()
+            print("  Email delivery uses SMTP. Gmail works out of the box with an App Password.")
+            print("  Gmail App Password: myaccount.google.com > Security > App Passwords")
+            print()
+            email_to = ask("Send briefing to (email address)")
+            smtp_user = ask("SMTP username (your Gmail address)")
+            smtp_password = ask("SMTP password (App Password for Gmail)")
+            use_defaults = ask_yn("Use Gmail SMTP (smtp.gmail.com:587)?", default=True)
+            if use_defaults:
+                smtp_host = "smtp.gmail.com"
+                smtp_port = 587
+            else:
+                smtp_host = ask("SMTP host", default="smtp.gmail.com")
+                smtp_port = int(ask("SMTP port", default="587"))
+            delivery["email_to"] = email_to
+            delivery["email_from"] = smtp_user
+            delivery["smtp_user"] = smtp_user
+            delivery["smtp_password"] = smtp_password
+            delivery["smtp_host"] = smtp_host
+            delivery["smtp_port"] = smtp_port
+
         # --- Pro: multi-channel additional channels ---
         if tier == "pro":
             print()
             print("  Pro tier supports up to 3 delivery channels simultaneously.")
             channels_list = [channel]
-            remaining_channels = [c for c in ("imessage", "slack", "telegram") if c != channel]
+            remaining_channels = [c for c in ("imessage", "slack", "telegram", "email") if c != channel]
 
             for i, next_default in enumerate(remaining_channels[:2], start=2):
                 add_another = ask_yn(f"Add a 2nd delivery channel? (optional)", default=False) if i == 2 else ask_yn("Add a 3rd delivery channel? (optional)", default=False)
                 if not add_another:
                     break
-                _avail = [c for c in ("imessage", "slack", "telegram", "none") if c not in channels_list]
+                _avail = [c for c in ("imessage", "slack", "telegram", "email", "none") if c not in channels_list]
                 print(f"  Available: {', '.join(_avail)}")
                 while True:
                     ch2 = ask(f"Channel {i}", default=_avail[0] if _avail else "none").lower()
@@ -1925,7 +1975,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 2.1.1")
+    parser.add_argument("--version", action="version", version="Northstar 2.2.0")
 
     args = parser.parse_args()
 

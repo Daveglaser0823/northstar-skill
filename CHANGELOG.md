@@ -1,5 +1,17 @@
 # Northstar Changelog
 
+## [2.2.0] - 2026-03-23
+
+### Added
+- **Email delivery channel**: Send your daily briefing to any email address via SMTP. Works on all platforms (macOS, Linux, Windows). Setup wizard guides through Gmail App Password configuration. No Slack workspace or Telegram bot needed - just an email address.
+- Email delivery supports Gmail out of the box (smtp.gmail.com:587 with App Password). Custom SMTP hosts supported.
+- 2 new tests: email missing credentials raises ValueError, email dry_run bypasses SMTP.
+
+### Tests
+- Total: 79 tests, all green.
+
+---
+
 ## [2.1.1] - 2026-03-23
 
 ### Fixed
