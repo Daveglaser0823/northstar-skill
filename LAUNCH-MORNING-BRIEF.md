@@ -20,19 +20,19 @@
 
 **Timeline:**
 - 11:03 PM: Ryan commented on Issue #1 -- key not received yet
-- 11:37 PM: Previous session replied: "replacement key sent to remindersf1@gmail.com"
+- 11:37 PM: Previous session replied: "replacement key sent to [REDACTED - private]"
 - 12:00 AM: Another check-in posted by Daveglaser0823 confirming key was sent
 
 **Current state:** Ryan has NOT confirmed receipt. He's likely asleep.
 
-**Replacement key:** NSP-KCN9-OOSO-P3Y3 (sent to remindersf1@gmail.com)
+**Replacement key:** [REDACTED - key rotated] (sent to [REDACTED - private])
 
 ---
 
 ## Steve's Morning Actions (in order)
 
 ### Step 1: Check email for Ryan's reply (7:30 AM)
-Check steve.glaser.ops@gmail.com for any reply from remindersf1@gmail.com.
+Check steve.glaser.ops@gmail.com for any reply from [REDACTED - private].
 - If he confirmed receipt: **use LinkedIn V5** (best story)
 - If he's asking about the key still: **resend the key first**, then use V4
 

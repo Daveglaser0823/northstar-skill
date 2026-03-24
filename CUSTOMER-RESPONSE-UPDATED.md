@@ -178,7 +178,7 @@ Your answers shape what gets built next. You're one of the first -- your input c
 ## Key Inventory (local only)
 
 Replacement key for Ryan (rcraig14):
-- **NSP-KCN9-OOSO-P3Y3** (Pro, pre-generated - deliver when Ryan emails)
+- **[REDACTED - key rotated]** (Pro, pre-generated - deliver when Ryan emails)
 - Status: Ready. Waiting for Ryan to email.
 
 *Note: Never log issued keys in public files or GitHub issues.*

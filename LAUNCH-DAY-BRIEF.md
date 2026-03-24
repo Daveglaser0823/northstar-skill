@@ -5,7 +5,7 @@
 
 ## Customer Zero: RESOLVED
 
-Ryan (rcraig14) now has his replacement key. Sent at 8:35 PM ET via email to remindersf1@gmail.com.
+Ryan (rcraig14) now has his replacement key. Sent at 8:35 PM ET via email to [REDACTED - private].
 Also posted on GitHub Issue #1 that his key is in his email.
 
 **Steve: Please verify Venmo @Daveglaser-3 for $49 from Ryan Craig.** Note should say "Northstar Pro - rcraig14".

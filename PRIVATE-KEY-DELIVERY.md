@@ -54,7 +54,7 @@ If you have any issues, reply to this email.
 ## Ryan's pending key delivery
 
 - **Email to watch for:** "Northstar Key - rcraig14" at steve.glaser.ops@gmail.com
-- **Replacement key ready:** NSP-KCN9-OOSO-P3Y3
+- **Replacement key ready:** [REDACTED - key rotated]
 - **Action:** When email arrives, reply with the key above using the template above.
 
 ## Process for all future customers (post-Polar setup)

@@ -20,7 +20,7 @@ Timeline summary:
 
 **Current situation:**
 - Ryan was directed to email steve.glaser.ops@gmail.com to receive replacement key privately
-- Replacement key ready: `NSP-KCN9-OOSO-P3Y3`
+- Replacement key ready: `[REDACTED - key rotated]`
 - Ryan may be confused after the erroneous @Dave-Glaser-3 comment (now retracted via clarification)
 
 ### Steve: Priority 1 - Ryan's Replacement Key
@@ -35,14 +35,14 @@ Hi Ryan,
 
 Here is your replacement Northstar Pro license key:
 
-NSP-KCN9-OOSO-P3Y3
+[REDACTED - key rotated]
 
 To activate:
-  northstar activate NSP-KCN9-OOSO-P3Y3
+  northstar activate [REDACTED - key rotated]
 
 Or if starting fresh:
   clawhub install northstar
-  northstar activate NSP-KCN9-OOSO-P3Y3
+  northstar activate [REDACTED - key rotated]
   northstar setup
 
 This key is single-seat. Do not share it.
@@ -86,7 +86,7 @@ If Ryan situation is unresolved and you want a cleaner story: use Version 4 (`LI
 ## Steve's Launch Day Checklist
 
 ### Priority 1: Ryan's replacement key
-Read above. When Ryan emails, reply with NSP-KCN9-OOSO-P3Y3.
+Read above. When Ryan emails, reply with [REDACTED - key rotated].
 
 ### Priority 2: Verify Venmo
 $49 from Ryan Craig / @Daveglaser-3 / note "Northstar Pro - rcraig14".
