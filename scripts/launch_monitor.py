@@ -74,7 +74,7 @@ def check_open_issues():
 
     for issue in data:
         title = issue.get("title", "")
-        labels = [l.get("name", "") for l in issue.get("labels", [])]
+        labels = [lbl.get("name", "") for lbl in issue.get("labels", [])]
         item = {
             "number": issue.get("number"),
             "title": title,
@@ -129,12 +129,12 @@ def print_report(repo, issues, ci, landing, clawhub):
         stars = repo["stars"]
         forks = repo["forks"]
         open_i = repo["open_issues"]
-        print(f"\n📊 GitHub Repo")
+        print("\n📊 GitHub Repo")
         print(f"   Stars:       {stars}  {'⭐ Great!' if stars > 15 else '📍 Pre-launch' if stars == 0 else ''}")
         print(f"   Forks:       {forks}")
         print(f"   Open Issues: {open_i}")
     else:
-        print(f"\n❌ GitHub API unavailable")
+        print("\n❌ GitHub API unavailable")
 
     # Open issues detail
     if issues["ok"]:
@@ -151,12 +151,12 @@ def print_report(repo, issues, ci, landing, clawhub):
             for bug in bugs:
                 print(f"   #{bug['number']}: {bug['title']}")
         if not lr and not bugs:
-            print(f"\n   No open license requests or bug reports.")
+            print("\n   No open license requests or bug reports.")
         if other:
             print(f"\n   Other issues: {len(other)}")
 
     # CI status
-    print(f"\n🔄 CI Status")
+    print("\n🔄 CI Status")
     if ci["ok"] and ci["latest"]:
         run = ci["latest"]
         symbol = "✅" if run.get("conclusion") == "success" else "❌"
@@ -165,24 +165,24 @@ def print_report(repo, issues, ci, landing, clawhub):
         run = ci["latest"]
         print(f"   ⏳ {run['name']}: {run['status']}")
     else:
-        print(f"   ❓ No CI runs found")
+        print("   ❓ No CI runs found")
 
     # Infrastructure
-    print(f"\n🌐 Infrastructure")
+    print("\n🌐 Infrastructure")
     for check in [landing, clawhub]:
         symbol = "✅" if check["ok"] else "❌"
         print(f"   {symbol} {check['label']}: HTTP {check['status']}")
 
     # Assessment
-    print(f"\n📋 Assessment")
+    print("\n📋 Assessment")
     if repo["ok"]:
         stars = repo["stars"]
         lr_count = len(issues.get("license_requests", []))
         if lr_count > 0:
             print(f"   🚨 ACTION REQUIRED: {lr_count} license request(s) pending!")
-            print(f"      See CUSTOMER-ZERO-RESPONSE.md immediately.")
+            print("      See CUSTOMER-ZERO-RESPONSE.md immediately.")
         elif stars == 0:
-            print(f"   📍 Pre-launch. Stars: 0. No requests yet.")
+            print("   📍 Pre-launch. Stars: 0. No requests yet.")
         elif stars < 5:
             print(f"   📌 Early signal. Stars: {stars}. Watch through Day 7.")
         elif stars < 15:

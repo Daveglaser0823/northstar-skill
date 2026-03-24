@@ -8,8 +8,6 @@ import sys
 import json
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from datetime import datetime
 
 # Add scripts dir to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
@@ -429,7 +427,9 @@ class TestActivateCommand(unittest.TestCase):
     def test_activate_std_key_validates(self):
         """NS-STD- prefix correctly identified as standard tier."""
         from northstar import cmd_activate
-        import io, tempfile, json, os
+        import io
+        import tempfile
+        import os
         from contextlib import redirect_stdout
         from pathlib import Path
         # Write a minimal config to a temp file
@@ -454,7 +454,9 @@ class TestActivateCommand(unittest.TestCase):
     def test_activate_pro_key_validates(self):
         """NS-PRO- prefix correctly identified as pro tier."""
         from northstar import cmd_activate
-        import io, tempfile, json, os
+        import io
+        import tempfile
+        import os
         from contextlib import redirect_stdout
         from pathlib import Path
         cfg = {"tier": "lite", "delivery": {}, "stripe": {}, "schedule": {}}

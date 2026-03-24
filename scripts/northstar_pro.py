@@ -14,7 +14,6 @@ Import from northstar.py or run standalone:
   northstar trend     -- show 7-day trend only
 """
 
-import json
 import math
 import operator
 import sys

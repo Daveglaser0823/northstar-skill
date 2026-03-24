@@ -13,7 +13,7 @@ import hmac
 import hashlib
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Add scripts dir to path
 scripts_dir = str(Path(__file__).parent.parent / "scripts")
@@ -21,9 +21,9 @@ if scripts_dir not in sys.path:
     sys.path.insert(0, scripts_dir)
 
 # Load northstar first (needed by northstar_pro)
-import northstar  # noqa: F401
+import northstar  # noqa: F401,E402
 
-import importlib.util
+import importlib.util  # noqa: E402
 
 
 def load_pro():
@@ -242,7 +242,6 @@ class TestMultiChannelGating(unittest.TestCase):
     def _run_deliver_multi(self, config, message="test"):
         """Run deliver_multi, capturing the max_channels argument used."""
         captured_max = {}
-        original_deliver = None
 
         # We need to patch the underlying unified_deliver_multi
         # The call chain is: pro.deliver_multi -> delivery.deliver_multi

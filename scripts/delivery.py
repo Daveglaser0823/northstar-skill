@@ -12,7 +12,6 @@ import subprocess
 import tempfile
 import os
 from datetime import datetime
-from typing import Optional
 
 from models import DeliveryConfig
 

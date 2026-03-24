@@ -14,7 +14,7 @@ import argparse
 import subprocess
 import hmac
 import hashlib
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -1220,14 +1220,14 @@ def cmd_activate(license_key: str):
             pass
 
     if org_id:
-        print(f"Validating license key with Polar...", end=" ", flush=True)
+        print("Validating license key with Polar...", end=" ", flush=True)
         result = validate_polar_license(key, org_id)
         if not result["valid"]:
             print("FAILED")
             print(f"\nError: {result['error']}")
             print()
             print("If you just purchased, wait a moment and try again.")
-            print(f"Support: https://github.com/Daveglaser0823/northstar-skill/issues")
+            print("Support: https://github.com/Daveglaser0823/northstar-skill/issues")
             sys.exit(1)
         print("OK")
         # Use tier from Polar if we couldn't detect from prefix
@@ -1260,7 +1260,7 @@ def cmd_activate(license_key: str):
         json.dump(config, f, indent=2)
 
     print(f"\nNorthstar {tier.title()} activated.")
-    print(f"License key stored in config.")
+    print("License key stored in config.")
     print()
     if tier == "standard":
         print("Standard features now available:")
@@ -1334,7 +1334,6 @@ def cmd_shopify(config: dict):
 
 def cmd_demo():
     """Show a sample briefing with demo data. No config needed."""
-    from datetime import date
     print()
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print("  Northstar Demo - Sample Briefing")
@@ -1527,7 +1526,7 @@ def cmd_setup():
             remaining_channels = [c for c in ("imessage", "slack", "telegram", "email") if c != channel]
 
             for i, next_default in enumerate(remaining_channels[:2], start=2):
-                add_another = ask_yn(f"Add a 2nd delivery channel? (optional)", default=False) if i == 2 else ask_yn("Add a 3rd delivery channel? (optional)", default=False)
+                add_another = ask_yn("Add a 2nd delivery channel? (optional)", default=False) if i == 2 else ask_yn("Add a 3rd delivery channel? (optional)", default=False)
                 if not add_another:
                     break
                 _avail = [c for c in ("imessage", "slack", "telegram", "email", "none") if c not in channels_list]
@@ -1845,9 +1844,9 @@ def cmd_report(config: dict):
         return
 
     now = datetime.now()
-    print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"  Northstar Detail Report - {now.strftime('%B %-d, %Y')}")
-    print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print()
 
     # Stripe detail
@@ -1882,7 +1881,7 @@ def cmd_report(config: dict):
             if failures or retries:
                 print(f"  ⚠ Payment issues: {failures} failed, {retries} retrying")
             else:
-                print(f"  Payment issues: none")
+                print("  Payment issues: none")
 
             # 7-day trend (Pro module)
             print()
@@ -1918,7 +1917,7 @@ def cmd_report(config: dict):
             if wow is not None:
                 print(f"  Week-over-week: {fmt_pct(wow)}")
             print()
-            print(f"  Yesterday breakdown:")
+            print("  Yesterday breakdown:")
             print(f"    Processed: {d['processed_yesterday']}")
             print(f"    Failed:    {d['failed_yesterday']}")
             print(f"    Pending:   {d['pending_yesterday']}")
@@ -1953,9 +1952,9 @@ def cmd_report(config: dict):
             print()
 
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"  northstar run   -- deliver summary briefing")
-    print(f"  northstar trend -- 7-day trend chart (Stripe)")
-    print(f"  northstar digest -- weekly rollup (Pro)")
+    print("  northstar run   -- deliver summary briefing")
+    print("  northstar trend -- 7-day trend chart (Stripe)")
+    print("  northstar digest -- weekly rollup (Pro)")
     print()
 
 

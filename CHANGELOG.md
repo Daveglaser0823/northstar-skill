@@ -1,5 +1,11 @@
 # Northstar Changelog
 
+## v2.9.0 - 2026-03-24
+### Changed
+- CI: lint is now blocking (was continue-on-error)
+- CI: added coverage threshold (60% minimum)
+- Fixed all 42 ruff lint warnings (unused imports, f-string cleanup, variable naming)
+
 ## [2.8.0] - 2026-03-24
 
 ### Security (P0 Fix)

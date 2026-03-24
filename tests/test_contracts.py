@@ -13,7 +13,6 @@ Created: March 24, 2026 (Phase 1, Architecture Fix)
 
 import sys
 import os
-import pytest
 from dataclasses import fields
 
 # Add scripts dir to path

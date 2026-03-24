@@ -8,7 +8,7 @@ Covers send_to_channel, deliver, deliver_multi, and DeliveryConfig.from_config()
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 
 # Add scripts dir to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
@@ -77,11 +77,12 @@ class TestSendToChannelIMessage(unittest.TestCase):
         mock_result = MagicMock()
         mock_result.returncode = 0
         with patch("platform.system", return_value="Darwin"), \
-             patch("subprocess.run", return_value=mock_result) as mock_run, \
+             patch("subprocess.run", return_value=mock_result), \
              patch("tempfile.NamedTemporaryFile"), \
              patch("os.unlink"):
             # We need the full tempfile flow to work; use a real temp file
-            import tempfile, os
+            import tempfile
+            import os
             with tempfile.NamedTemporaryFile(mode="w", suffix=".applescript", delete=False) as f:
                 tmp = f.name
             try:
