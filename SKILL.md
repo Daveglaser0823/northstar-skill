@@ -11,7 +11,7 @@ Every morning at your configured time, Northstar:
 2. Pulls order data from Shopify (orders, refunds, top products)
 3. Calculates week-over-week and month-to-date metrics
 4. Flags anything that needs attention (unusual churn, payment retries, large refunds)
-5. Delivers a clean briefing via your preferred channel (iMessage, Slack, or Telegram)
+5. Delivers a clean briefing via your preferred channel (iMessage, Slack, Telegram, or Email)
 
 ## Example Output
 
@@ -108,6 +108,7 @@ Config file: `~/.clawd/skills/northstar/config/northstar.json`
 | iMessage | `"imessage"` | Phone number: `"+15551234567"` |
 | Slack | `"slack"` | Webhook URL |
 | Telegram | `"telegram"` | Chat ID (numeric) |
+| Email | `"email"` | SMTP config (Gmail App Password supported) |
 | Terminal only | `"none"` | n/a (dry-run mode) |
 
 ### Stripe Setup

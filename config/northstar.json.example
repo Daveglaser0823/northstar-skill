@@ -13,7 +13,14 @@
     "imessage_recipient": "+15551234567",
     "slack_webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
     "telegram_chat_id": "",
-    "telegram_bot_token": ""
+    "telegram_bot_token": "",
+    "_comment_email": "Email delivery via SMTP. Gmail: create an App Password at myaccount.google.com > Security > App Passwords",
+    "email_to": "you@example.com",
+    "email_from": "sender@gmail.com",
+    "smtp_user": "sender@gmail.com",
+    "smtp_password": "your-gmail-app-password",
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587
   },
 
   "schedule": {
@@ -50,6 +57,15 @@
     "enabled": false,
     "access_token": "YOUR_GUMROAD_ACCESS_TOKEN",
     "monthly_revenue_goal": 0
+  },
+
+  "dwolla": {
+    "_comment": "Optional. For Dwolla ACH payment operations. Add your Dwolla API credentials for ACH transfer metrics.",
+    "enabled": false,
+    "key": "YOUR_DWOLLA_API_KEY",
+    "secret": "YOUR_DWOLLA_API_SECRET",
+    "environment": "production",
+    "monthly_volume_goal": 0
   },
 
   "alerts": {

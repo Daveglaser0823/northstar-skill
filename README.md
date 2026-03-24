@@ -20,7 +20,7 @@ Your OpenClaw agent is already running 24/7. It can do this for you.
 
 ## The Solution
 
-Northstar is an OpenClaw skill that pulls your key business metrics each morning and delivers a clean briefing via iMessage, Slack, or Telegram.
+Northstar is an OpenClaw skill that pulls your key business metrics each morning and delivers a clean briefing via iMessage, Slack, Telegram, or Email.
 
 ```
 📊 Northstar Daily Briefing - March 22
