@@ -510,6 +510,45 @@ class TestActivateCommand(unittest.TestCase):
         output = buf.getvalue()
         self.assertIn("Pro", output)
 
+    def test_upgrade_lite_shows_standard_and_pro(self):
+        """northstar upgrade shows Standard + Pro links for Lite users."""
+        from northstar import cmd_upgrade
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_upgrade({"tier": "lite"})
+        output = buf.getvalue()
+        self.assertIn("Standard", output)
+        self.assertIn("19", output)
+        self.assertIn("Pro", output)
+        self.assertIn("49", output)
+        self.assertIn("polar.sh", output)
+
+    def test_upgrade_standard_shows_pro(self):
+        """northstar upgrade shows Pro upgrade for Standard users."""
+        from northstar import cmd_upgrade
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_upgrade({"tier": "standard"})
+        output = buf.getvalue()
+        self.assertIn("Pro", output)
+        self.assertIn("49", output)
+        self.assertIn("polar.sh", output)
+
+    def test_upgrade_pro_shows_no_upgrade(self):
+        """northstar upgrade shows all-clear for Pro users."""
+        from northstar import cmd_upgrade
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_upgrade({"tier": "pro"})
+        output = buf.getvalue()
+        self.assertIn("top tier", output)
+
 
 # ---- Runner ----------------------------------------------------------------
 

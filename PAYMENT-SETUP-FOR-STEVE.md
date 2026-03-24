@@ -77,7 +77,7 @@ If Polar setup isn't done before 8 AM launch:
 
 1. When a license request comes in via GitHub issue, reply:
    ```
-   Thanks! Send $19 via Venmo (@DaveGlaser) with note "Northstar Standard [your-email]". 
+   Thanks! Send $19 via Venmo (@Daveglaser-3) with note "Northstar Standard [your-email]". 
    License key arrives in <1 hour.
    ```
 2. After payment confirmed, generate key: `python3 -c "import secrets; print('NSS-' + secrets.token_urlsafe(20).upper()[:20])"`

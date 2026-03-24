@@ -6,7 +6,7 @@
 ## Customer Zero: Ryan (rcraig14) - Pro Tier
 
 **What to watch for:**
-- Venmo: @DaveGlaser, note "Northstar Pro - rcraig14"
+- Venmo: @Daveglaser-3, note "Northstar Pro - rcraig14"
 - PayPal: glaser.dave@gmail.com, same note
 - Amount: $49
 

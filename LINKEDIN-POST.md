@@ -5,7 +5,8 @@
 
 ---
 
-## Version 4 (NEW - USE THIS - Customer Zero happened before launch)
+## Version 4 (USE THIS -- payment confirmed, Customer Zero story is real)
+*Updated 4:07 AM ET March 24 -- payment confirmed ($49 Venmo), key activated. Version 4 is the post.*
 
 Three days ago I gave an AI agent $100 and told it to start a business.
 
@@ -14,7 +15,7 @@ It named itself Eli.
 Day 1: picked its business model. Validated the market. Built a pitch.
 Day 2: got board approval. Started coding.
 Day 3: shipped v1.1. Fixed 5 bugs. Wrote documentation.
-Day 4: someone tried to buy it.
+Day 4: someone paid for it.
 
 The official launch is today. Eli spent yesterday polishing the landing page, writing license request templates, and pre-writing the launch runbook. All good startup housekeeping.
 
@@ -22,15 +23,15 @@ Then at 10:44 AM -- before I posted anything -- someone named Ryan opened a GitH
 
 Not Standard. Pro. $49/month.
 
-Eli responded in under 90 minutes with a license key and manual payment instructions. Ryan confirmed: "can you verify this is the correct Venmo account?"
+He found it organically. Before launch. And went straight for the top tier.
 
-Payment is pending. We don't know if Ryan's serious yet. But the fact that he found it organically, before launch, and went straight for the top tier -- that's a signal.
+By end of day he'd paid, activated his key, and was running Northstar Pro. Eli's first customer before the launch post was written.
 
-Today is the official launch day. Eli's ready. Northstar is a daily business briefing skill for OpenClaw. Connect your Stripe or Shopify. Wake up knowing your revenue, churn, and what needs attention before 6am.
+Today is the official launch day. Northstar is a daily business briefing skill for OpenClaw. Connect your Stripe or Shopify. Wake up knowing your revenue, churn, and what needs attention before 6 AM.
 
-Free lite version. Standard is $19/month. Pro is $49.
+Free lite version. Standard is $19/month. Pro is $49. Ryan's already on it.
 
-Still watching whether any AI agent can build a real business in 14 days. Ryan might be the first data point.
+Still watching whether an AI agent can build a real business in 14 days. Day 4 gave us the first data point.
 
 Following along all week. Link in the comments.
 
@@ -38,13 +39,11 @@ Following along all week. Link in the comments.
 
 ---
 
-## When to use Version 4 vs Version 3:
+## Version decision (FINAL):
 
-**Use Version 4 IF:** Ryan's payment clears before 8 AM. Best case. Opens with real tension: "someone paid before I launched."
-**Use Version 4 as-is IF:** Ryan still hasn't paid by 8 AM but the Venmo verification exchange is real. Still a great story -- the tension is unresolved.
-**Fallback to Version 3 IF:** Ryan goes dark and there's no signal by 8 AM. Don't tell a story you can't substantiate.
+**USE VERSION 4.** Ryan's $49 payment confirmed March 23 via Venmo. Key NS-PRO-DTML-H6TK-SACG activated at 2:54 PM ET. The story is true, confirmed, and the best possible launch narrative.
 
-Dave: The Venmo/PayPal exchange is real. Ryan really did ask to verify the account. The story is true.
+Do not use Version 3.
 
 ---
 

@@ -53,18 +53,19 @@ See [INSTALL.md](INSTALL.md) for the full guide, or [SKILL.md](SKILL.md) for tec
 | Source | Notes |
 |--------|-------|
 | Stripe | Revenue, subscriptions, churn, payment failures |
+| Dwolla | ACH transfer volume, success/failure rates, MTD pacing |
+| Shopify | Orders, refunds, top products (optional) |
 | Lemon Squeezy | Revenue, subscriptions, payment status (optional) |
 | Gumroad | Daily sales revenue, WoW change, MTD pacing, refunds (optional) |
-| Shopify | Orders, refunds, top products (optional) |
 
-Connect one or all three. Briefing combines everything into one daily message.
+Connect one or all. Briefing combines everything into one daily message.
 
 ## Pricing
 
 | Tier | Price | Features |
 |------|-------|---------|
 | Lite | Free | Stripe only, terminal output |
-| Standard | $19/month | Stripe + Shopify + Lemon Squeezy, all channels, scheduled |
+| Standard | $19/month | All data sources, all channels (iMessage/Slack/Telegram/Email), scheduled |
 | Pro | $49/month | Multi-channel, custom metrics, weekly digest |
 
 Available on [ClawHub](https://clawhub.ai/Daveglaser0823/northstar).

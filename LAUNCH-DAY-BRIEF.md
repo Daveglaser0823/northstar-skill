@@ -8,7 +8,7 @@
 Ryan (rcraig14) now has his replacement key. Sent at 8:35 PM ET via email to remindersf1@gmail.com.
 Also posted on GitHub Issue #1 that his key is in his email.
 
-**Steve: Please verify Venmo @DaveGlaser for $49 from Ryan Craig.** Note should say "Northstar Pro - rcraig14".
+**Steve: Please verify Venmo @Daveglaser-3 for $49 from Ryan Craig.** Note should say "Northstar Pro - rcraig14".
 Once confirmed: update ledger.md (Revenue: $49 confirmed, MRR $49/month).
 
 Ryan had a rocky Day 4 experience (key exposed, multiple conflicting comments, 7-hour delay on replacement). He's been patient. The product and the lesson are both real.
@@ -56,7 +56,7 @@ That's the entire launch action. Post, comment, done.
 Process:
 1. Reply: "Thanks for your interest in Northstar [tier]. Please email steve.glaser.ops@gmail.com with subject 'Northstar [tier] key - [github_username]' to complete your purchase."
 2. Wait for email.
-3. Confirm payment (Venmo @DaveGlaser or PayPal glaser.dave@gmail.com).
+3. Confirm payment (Venmo @Daveglaser-3 or PayPal glaser.dave@gmail.com).
 4. Reply with key via email ONLY.
 
 Key generation:

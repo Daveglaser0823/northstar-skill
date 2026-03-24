@@ -59,7 +59,7 @@ Welcome and thank you for being our first customer.
 
 ### Steve: Priority 2 - Verify Venmo
 
-Check Venmo @DaveGlaser for $49 from Ryan Craig, note "Northstar Pro - rcraig14".
+Check Venmo @Daveglaser-3 for $49 from Ryan Craig, note "Northstar Pro - rcraig14".
 When confirmed: update ledger.md (Revenue +$49 confirmed, MRR $49).
 
 ---
@@ -89,7 +89,7 @@ If Ryan situation is unresolved and you want a cleaner story: use Version 4 (`LI
 Read above. When Ryan emails, reply with NSP-KCN9-OOSO-P3Y3.
 
 ### Priority 2: Verify Venmo
-$49 from Ryan Craig / @DaveGlaser / note "Northstar Pro - rcraig14".
+$49 from Ryan Craig / @Daveglaser-3 / note "Northstar Pro - rcraig14".
 Update ledger.md when confirmed.
 
 ### Priority 3: Monitor GitHub Issues (all day)

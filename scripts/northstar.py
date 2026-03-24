@@ -1073,7 +1073,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     gumroad_data = None
     dwolla_data = None
 
-    print(f"Northstar v2.1.1 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v2.3.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
@@ -1344,10 +1344,9 @@ def cmd_status(config: dict):
     print("To run now: northstar run")
     print("To test:    northstar test")
     tier = config.get("tier", "lite")
-    if tier == "lite":
+    if tier in ("lite", "standard"):
         print()
-        print("Upgrade to Standard ($19/month):")
-        print("  https://polar.sh/daveglaser0823/northstar-standard")
+        print("Upgrade options: northstar upgrade")
 
 def cmd_stripe(config: dict):
     """Show raw Stripe data (debug)."""
@@ -1815,6 +1814,68 @@ def cmd_setup():
 
 # ---- CLI -------------------------------------------------------------------
 
+def cmd_upgrade(config: dict):
+    """Show upgrade options and what each tier unlocks."""
+    tier = config.get("tier", "lite")
+    print()
+    print("Northstar Upgrade Options")
+    print("=" * 40)
+    print()
+    if tier == "lite":
+        print("You're on the FREE Lite tier.")
+        print()
+        print("  Lite (current): Stripe only, terminal output only, no scheduling")
+        print()
+        print("  Standard  $19/month")
+        print("  ┣ All data sources (Stripe, Shopify, Dwolla, Lemon Squeezy, Gumroad)")
+        print("  ┣ All delivery channels (iMessage, Slack, Telegram, Email)")
+        print("  ┗ Scheduled daily delivery (runs automatically at your chosen time)")
+        print()
+        print("  Pro  $49/month")
+        print("  ┣ Everything in Standard")
+        print("  ┣ Multi-channel delivery (up to 3 channels simultaneously)")
+        print("  ┣ northstar report  -- full drill-down metrics")
+        print("  ┣ northstar digest  -- weekly 7-day rollup")
+        print("  ┗ northstar trend   -- sparkline revenue chart")
+        print()
+        print("  Get Standard:  https://polar.sh/daveglaser0823/northstar-standard")
+        print("  Get Pro:       https://polar.sh/daveglaser0823/northstar-pro")
+        print()
+        print("  After purchase, Polar emails you a license key. Then run:")
+        print("    northstar activate YOUR-KEY")
+    elif tier == "standard":
+        print("You're on Standard tier. ($19/month)")
+        print()
+        print("  Standard (current)")
+        print("  ┣ All data sources")
+        print("  ┣ All delivery channels")
+        print("  ┗ Scheduled delivery")
+        print()
+        print("  Upgrade to Pro  $49/month")
+        print("  ┣ Everything you have now")
+        print("  ┣ Multi-channel delivery (up to 3 channels)")
+        print("  ┣ northstar report  -- full drill-down metrics")
+        print("  ┣ northstar digest  -- weekly 7-day rollup")
+        print("  ┗ northstar trend   -- sparkline revenue chart")
+        print()
+        print("  Upgrade to Pro: https://polar.sh/daveglaser0823/northstar-pro")
+        print("  After purchase, activate your new key: northstar activate YOUR-PRO-KEY")
+    elif tier == "pro":
+        print("You're on Pro tier. ($49/month)")
+        print()
+        print("  You have access to all features:")
+        print("  ┣ northstar run / test  -- daily briefing")
+        print("  ┣ northstar report      -- full drill-down metrics")
+        print("  ┣ northstar digest      -- weekly 7-day rollup")
+        print("  ┣ northstar trend       -- sparkline revenue chart")
+        print("  ┗ Multi-channel delivery (up to 3 channels)")
+        print()
+        print("  No upgrades available -- you're at the top tier.")
+        print()
+        print("  Feedback or feature requests: https://github.com/Daveglaser0823/northstar-skill/issues")
+    print()
+
+
 def cmd_report(config: dict):
     """Detailed drill-down report for all configured data sources (Pro)."""
     tier = config.get("tier", "lite")
@@ -1947,6 +2008,7 @@ Commands:
   demo      Show a sample briefing with demo data (no config needed)
   setup     Interactive setup wizard - configure without editing JSON
   activate  Activate Standard or Pro tier with a license key
+  upgrade   Show upgrade options and what each tier unlocks
   run       Run briefing and deliver to configured channel
   test      Dry-run - print briefing to terminal only
   status    Show config and last run info
@@ -1960,6 +2022,7 @@ Examples:
   northstar demo                          # Try it first - no config needed
   northstar setup                         # Configure interactively
   northstar activate NS-STD-XXXX-XXXX     # Activate after purchase
+  northstar upgrade                       # See what higher tiers offer
   northstar run
   northstar test
   northstar status
@@ -1969,13 +2032,13 @@ Examples:
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify", "report", "digest", "trend", "demo", "setup", "activate"],
+                        choices=["run", "test", "status", "stripe", "shopify", "report", "digest", "trend", "demo", "setup", "activate", "upgrade"],
                         help="Command to run (default: run)")
     parser.add_argument("license_key", nargs="?", default=None,
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 2.2.0")
+    parser.add_argument("--version", action="version", version="Northstar 2.3.0")
 
     args = parser.parse_args()
 
@@ -1990,6 +2053,14 @@ Examples:
 
     if args.command == "activate":
         cmd_activate(args.license_key or "")
+        return
+
+    if args.command == "upgrade":
+        try:
+            config = load_config(args.config)
+        except FileNotFoundError:
+            config = {}
+        cmd_upgrade(config)
         return
 
     # Load config
@@ -2019,6 +2090,8 @@ Examples:
         cmd_digest(config, dry_run=False)
     elif args.command == "trend":
         cmd_trend(config)
+    elif args.command == "upgrade":
+        cmd_upgrade(config)
 
 
 if __name__ == "__main__":
