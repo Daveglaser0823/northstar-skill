@@ -78,7 +78,16 @@ Before shipping any doc update:
 - [ ] `CHANGELOG.md` has an entry for this version
 - [ ] Entry includes: version, date, what changed, and "Tested by: [Eli/Steve]"
 
-### 8. ClawHub Publish (if applicable)
+### 8. External AI Evaluation (for user-facing changes)
+Before shipping changes to landing page, README, ClawHub listing, pricing, or onboarding:
+
+- [ ] Open ChatGPT at https://chatgpt.com (logged in on glaser.dave@gmail.com)
+- [ ] Verify model is **ChatGPT 5.4 with Extended Thinking enabled** (check model selector + thinking toggle)
+- [ ] Paste all public URLs (GitHub repo, landing page, ClawHub listing)
+- [ ] Ask for brutal honest evaluation: first impressions, value prop clarity, pricing reaction, trust signals, purchase friction, what stops buying, what accelerates buying
+- [ ] Process feedback and act on findings before shipping
+
+### 9. ClawHub Publish (if applicable)
 - [ ] Run `clawhub publish` after all fixes are committed and pushed
 - [ ] Verify the new version is live: `curl -s "https://api.clawhub.ai/api/v1/skills/northstar" | python3 -m json.tool | grep version`
 - [ ] Check for security warnings: `curl -s "https://api.clawhub.ai/api/v1/skills/northstar" | python3 -m json.tool | grep verdict`
@@ -103,8 +112,10 @@ Before shipping any doc update:
 |------|--------|--------|
 | March 24, 2026 | Created per board action item (Ryan Venmo incident) | Eli |
 | March 24, 2026 | Added 2a: PII/license key security check (Issue #2 - key + email exposure) | Eli |
+| March 24, 2026 | Added 8: External AI evaluation step (board feedback - ChatGPT eval) | Eli |
+| March 24, 2026 | Renumbered: ClawHub Publish -> 9, Paywall Integrity -> 10 | Eli |
 
-### 9. Paywall Integrity Check (MANDATORY for any tier/license change)
+### 10. Paywall Integrity Check (MANDATORY for any tier/license change)
 Verifies the paywall cannot be bypassed via local config editing.
 
 ```bash
