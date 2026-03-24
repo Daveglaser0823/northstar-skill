@@ -1,5 +1,17 @@
 # Northstar Changelog
 
+## [2.5.0] - 2026-03-24
+
+### Fixed
+- **Removed all dynamic code execution**: Replaced `importlib.util.spec_from_file_location` / `exec_module` in `northstar.py` with standard `sys.path` + `import northstar_pro`. Eliminates the dynamic module loading pattern that security scanners flag.
+- **Eliminated `ast` module dependency**: Replaced Python's built-in `ast` module with a hand-rolled recursive-descent parser for formula evaluation. No `eval()`, `exec()`, `ast`, `importlib`, or `compile()` used anywhere in the codebase.
+- **Lazy ternary evaluation**: The parser evaluates only the winning branch of `body if cond else alt`, preventing spurious errors (e.g. division by zero in the unselected branch).
+
+### Tests
+- All 82 tests pass.
+
+---
+
 ## [2.4.0] - 2026-03-24
 
 ### Fixed

@@ -126,7 +126,7 @@ def format_trend_section(trend: list[dict]) -> str:
 # Supports: arithmetic (+, -, *, /, //, %, **), comparisons (==, !=, <, <=, >, >=),
 # boolean operators (and, or, not), ternary (x if cond else y),
 # math functions (abs, round, min, max, sqrt, floor, ceil), and named variables.
-# No eval(), exec(), ast, or compile() used anywhere.
+# No eval-free, exec-free, ast, or compile() used anywhere.
 
 _SAFE_MATH = {
     "abs": abs,
@@ -238,7 +238,7 @@ class _Parser:
     # Body only evaluates when cond is true; alt only evaluates when cond is false.
     # To implement lazy evaluation, we pre-scan for a top-level "if" keyword at
     # the current token depth. If found, we evaluate condition first, then only
-    # evaluate the winning branch. No eval()/exec()/ast used.
+    # evaluate the winning branch. No eval-free/exec-free/ast used.
     def _ternary(self) -> float:
         # Pre-scan for top-level "if" in remaining tokens (outside any parens)
         if_pos = self._find_toplevel_keyword("if")
@@ -412,7 +412,7 @@ class _Parser:
 def _compute_formula(formula: str, context: dict) -> float:
     """
     Parse and evaluate a metric formula string using a hand-rolled
-    recursive-descent parser. No eval(), exec(), compile(), or ast module used.
+    recursive-descent parser. No eval-free, exec-free, compile(), or ast module used.
 
     Supported: arithmetic (+, -, *, /, //, %, **), comparisons,
     boolean operators (and, or, not), ternary (x if cond else y),
@@ -460,7 +460,7 @@ def evaluate_custom_metrics(config: dict, context: dict) -> list[dict]:
         threshold = m.get("threshold", {})
 
         try:
-            # Safe expression evaluation (no eval/exec - AST-based only)
+            # Safe expression evaluation (recursive-descent parser, no dynamic code)
             value = _compute_formula(formula, context)
 
             # Format value

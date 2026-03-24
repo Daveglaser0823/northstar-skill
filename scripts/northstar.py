@@ -18,17 +18,13 @@ from typing import Optional
 
 # Pro module (optional - only imported when Pro commands are used)
 def _load_pro():
-    """Lazy-load the Pro module from the same directory."""
-    import importlib.util
-    pro_path = Path(__file__).parent / "northstar_pro.py"
-    if not pro_path.exists():
-        print("Error: northstar_pro.py not found.")
-        sys.exit(1)
-    spec = importlib.util.spec_from_file_location("northstar_pro", pro_path)
-    mod = importlib.util.module_from_spec(spec)
-    # Inject this module into sys.modules so northstar_pro can 'from northstar import ...'
+    """Load the Pro module from the same directory using standard import."""
+    scripts_dir = str(Path(__file__).parent)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    # Expose this module as 'northstar' so northstar_pro can do 'from northstar import ...'
     sys.modules["northstar"] = sys.modules[__name__]
-    spec.loader.exec_module(mod)
+    import northstar_pro as mod  # noqa: PLC0415 (intentional lazy import)
     return mod
 
 # ---- Config ----------------------------------------------------------------
