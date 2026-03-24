@@ -105,36 +105,6 @@ class LemonSqueezyMetrics:
 
 
 @dataclass
-class DwollaMetrics:
-    """Canonical Dwolla metrics returned by fetch_dwolla_metrics()."""
-    source: str = "dwolla"
-    environment: str = "production"
-    # Yesterday
-    volume_yesterday: float = 0.0
-    count_yesterday: int = 0
-    processed_yesterday: int = 0
-    failed_yesterday: int = 0
-    pending_yesterday: int = 0
-    failed_volume_yesterday: float = 0.0
-    # WoW
-    wow_change_pct: Optional[float] = None
-    # MTD
-    volume_mtd: float = 0.0
-    count_mtd: int = 0
-    processed_mtd: int = 0
-    goal_dollars: float = 0.0
-    goal_pct: Optional[float] = None
-    on_track: Optional[bool] = None
-    projected_month: float = 0.0
-    days_remaining: int = 0
-    # Success rate
-    success_rate: float = 100.0
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
-@dataclass
 class DeliveryConfig:
     """
     Canonical delivery configuration. One source of truth for all delivery paths.

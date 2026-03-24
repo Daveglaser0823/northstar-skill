@@ -1,5 +1,7 @@
 # Northstar Changelog
 
+### v2.10.0 - Removed Dwolla adapter and all references. Northstar supports 4 sources: Stripe, Shopify, Lemon Squeezy, Gumroad.
+
 ## v2.9.0 - 2026-03-24
 ### Changed
 - CI: lint is now blocking (was continue-on-error)

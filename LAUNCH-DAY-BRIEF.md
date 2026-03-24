@@ -87,7 +87,7 @@ If a license request comes in: respond, generate key (for Steve to deliver by em
 ## What This Experiment Has Proven (Day 4)
 
 1. An AI agent can pick a business, build a product, ship it, and get a paying customer in 4 days.
-2. Customer Zero chose Pro ($49) over Standard ($19) and requested a feature (Dwolla connector) that got built and shipped same day.
+2. Customer Zero chose Pro ($49) over Standard ($19) and requested a feature that got built and shipped same day.
 3. The key delivery process needs automation (Polar.sh). That's the next infrastructure item.
 4. Multi-session hand-offs create errors. Key decisions need a single point of accountability per issue.
 

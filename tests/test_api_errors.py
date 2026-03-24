@@ -353,139 +353,7 @@ class TestGumroadErrors(unittest.TestCase):
 
 
 # ===========================================================================
-# 4. DWOLLA ADAPTER
-# ===========================================================================
-
-class TestDwollaErrors(unittest.TestCase):
-    """Tests for fetch_dwolla_metrics error handling."""
-
-    # --- 4a. Auth failure (401) at token endpoint --------------------------
-
-    def test_dwolla_auth_failure_raises_runtime_error(self):
-        """
-        Auth failure: urlopen raises HTTPError(401) on the /token endpoint.
-        The adapter wraps auth errors in RuntimeError('Dwolla auth failed: ...').
-        This test PASSES because the auth block has try/except.
-        """
-        with patch("urllib.request.urlopen", side_effect=make_http_error(401, "Unauthorized")):
-            with self.assertRaises(RuntimeError) as ctx:
-                northstar.fetch_dwolla_metrics("bad_key", "bad_secret", "sandbox", 10000.0)
-            self.assertIn("Dwolla auth failed", str(ctx.exception))
-
-    # --- 4b. Rate limit (429) at token endpoint ----------------------------
-
-    def test_dwolla_rate_limit_on_auth_raises_runtime_error(self):
-        """
-        Rate limit (429) at token endpoint: raises RuntimeError('Dwolla auth failed: ...').
-        The auth try/except catches this and wraps it.
-        This test PASSES because the auth block has try/except.
-        """
-        with patch("urllib.request.urlopen", side_effect=make_http_error(429, "Too Many Requests")):
-            with self.assertRaises(RuntimeError) as ctx:
-                northstar.fetch_dwolla_metrics("key", "secret", "sandbox", 10000.0)
-            self.assertIn("Dwolla auth failed", str(ctx.exception))
-
-    # --- 4c. Server error (500) on API call (after auth) -------------------
-
-    def test_dwolla_server_error_on_api_raises_runtime_error(self):
-        """
-        Server error (500) on an API call (not auth): dwolla_get() has try/except
-        for HTTPError and raises RuntimeError with the path and HTTP code.
-        Auth succeeds (first call), then GET / raises 500.
-        This test PASSES because dwolla_get wraps HTTPError.
-        """
-        token_resp = make_mock_response({"access_token": "test_token"})
-        server_error = make_http_error(500, "Internal Server Error", b'{"error":"server_error"}')
-
-        call_count = [0]
-        def side_effect(*args, **kwargs):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return token_resp  # Auth succeeds
-            raise server_error    # All subsequent calls fail
-
-        with patch("urllib.request.urlopen", side_effect=side_effect):
-            with self.assertRaises(RuntimeError) as ctx:
-                northstar.fetch_dwolla_metrics("key", "secret", "sandbox", 10000.0)
-            self.assertIn("HTTP 500", str(ctx.exception))
-
-    # --- 4d. Timeout on API call (after auth) ------------------------------
-
-    @unittest.expectedFailure
-    def test_dwolla_timeout_on_api_call_handled(self):
-        """
-        Timeout (URLError/socket.timeout) on API call after auth succeeds.
-        dwolla_get() only catches urllib.error.HTTPError -- URLError is NOT caught.
-        So URLError propagates as an unhandled exception.
-        Marked expectedFailure to document this gap.
-        """
-        token_resp = make_mock_response({"access_token": "test_token"})
-        timeout_error = make_url_error_timeout()
-
-        call_count = [0]
-        def side_effect(*args, **kwargs):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return token_resp
-            raise timeout_error
-
-        with patch("urllib.request.urlopen", side_effect=side_effect):
-            with self.assertRaises(RuntimeError) as ctx:
-                northstar.fetch_dwolla_metrics("key", "secret", "sandbox", 10000.0)
-            self.assertIn("timed out", str(ctx.exception).lower())
-
-    # --- 4e. Empty/malformed response (no access_token in token response) --
-
-    def test_dwolla_missing_access_token_raises_runtime_error(self):
-        """
-        Token endpoint returns 200 but no access_token field.
-        The adapter checks for missing access_token explicitly and raises RuntimeError.
-        This test PASSES because the adapter validates the token response.
-        """
-        token_resp = make_mock_response({})  # No access_token key
-
-        with patch("urllib.request.urlopen", return_value=token_resp):
-            with self.assertRaises(RuntimeError) as ctx:
-                northstar.fetch_dwolla_metrics("key", "secret", "sandbox", 10000.0)
-            self.assertIn("no access_token", str(ctx.exception))
-
-    # --- 4f. Empty transfers list (no KeyError) ----------------------------
-
-    def test_dwolla_empty_transfers_no_keyerror(self):
-        """
-        All API calls succeed but return empty transfer lists.
-        The adapter uses dict.get() defensively, so empty data should NOT
-        produce a KeyError. Passes if result is a valid dict with 0 volume.
-        """
-        def make_response_for(path_or_data):
-            return make_mock_response(path_or_data)
-
-        call_count = [0]
-        responses = [
-            {"access_token": "tok"},       # 1: token
-            {"_links": {"account": {"href": "https://api.dwolla.com/accounts/abc123"}}},  # 2: root
-            {"_embedded": {"transfers": []}, "_links": {}},  # 3: yesterday transfers
-            {"_embedded": {"transfers": []}, "_links": {}},  # 4: last week transfers
-            {"_embedded": {"transfers": []}, "_links": {}},  # 5: MTD transfers
-        ]
-
-        def side_effect(*args, **kwargs):
-            idx = call_count[0]
-            call_count[0] += 1
-            if idx < len(responses):
-                return make_response_for(responses[idx])
-            return make_response_for({"_embedded": {"transfers": []}, "_links": {}})
-
-        with patch("urllib.request.urlopen", side_effect=side_effect):
-            result = northstar.fetch_dwolla_metrics("key", "secret", "sandbox", 10000.0)
-
-        self.assertIsInstance(result, dict)
-        self.assertEqual(result["volume_yesterday"], 0.0)
-        self.assertEqual(result["count_yesterday"], 0)
-
-
-# ===========================================================================
-# 5. LEMON SQUEEZY ADAPTER
+# 4. LEMON SQUEEZY ADAPTER
 # ===========================================================================
 
 class TestLemonSqueezyErrors(unittest.TestCase):
@@ -587,7 +455,6 @@ class TestLemonSqueezyErrors(unittest.TestCase):
 # Stripe           | FAIL*   | FAIL*| FAIL*| FAIL*   | PASS
 # Shopify          | FAIL*   | FAIL*| FAIL*| FAIL*   | PASS
 # Gumroad          | PASS    | PASS | PASS | PASS    | PASS
-# Dwolla           | PASS    | PASS | PASS | FAIL*   | PASS
 # Lemon Squeezy    | FAIL*   | FAIL*| FAIL*| FAIL*   | PASS
 #
 # * = marked @unittest.expectedFailure (gap documented, not a bug in tests)

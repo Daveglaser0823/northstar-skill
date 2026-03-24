@@ -116,7 +116,7 @@ Here is your Northstar Pro license key:
 To activate:
   northstar activate [KEY]
 
-Then configure your data sources (Stripe, Shopify, Dwolla, etc.):
+Then configure your data sources (Stripe, Shopify, Lemon Squeezy, Gumroad):
   northstar setup
 
 Pro features include: northstar report (drill-down), weekly digest, multi-channel delivery, 7-day trend.

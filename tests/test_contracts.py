@@ -23,7 +23,6 @@ from models import (
     ShopifyMetrics,
     GumroadMetrics,
     LemonSqueezyMetrics,
-    DwollaMetrics,
     DeliveryConfig,
 )
 
@@ -251,21 +250,6 @@ class TestLemonSqueezyContract:
         model_fields = {f.name for f in fields(LemonSqueezyMetrics)}
         missing = self.CONSUMER_FIELDS - model_fields
         assert not missing, f"LemonSqueezyMetrics missing: {missing}"
-
-
-class TestDwollaContract:
-    CONSUMER_FIELDS = {
-        "volume_yesterday", "count_yesterday", "processed_yesterday",
-        "failed_yesterday", "pending_yesterday", "failed_volume_yesterday",
-        "wow_change_pct", "volume_mtd", "count_mtd", "processed_mtd",
-        "goal_dollars", "goal_pct", "on_track", "projected_month",
-        "days_remaining", "success_rate", "environment",
-    }
-
-    def test_dwolla_model_fields(self):
-        model_fields = {f.name for f in fields(DwollaMetrics)}
-        missing = self.CONSUMER_FIELDS - model_fields
-        assert not missing, f"DwollaMetrics missing: {missing}"
 
 
 # ---------------------------------------------------------------------------

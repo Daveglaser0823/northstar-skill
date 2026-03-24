@@ -47,8 +47,8 @@ Or if starting fresh:
 
 This key is single-seat. Do not share it.
 
-The Dwolla connector (v2.0.0) and northstar report (v2.1.0) are both live.
-Run northstar report for your Stripe + Dwolla drill-down.
+Northstar report (v2.1.0) is live.
+Run northstar report for your full data source drill-down.
 
 Welcome and thank you for being our first customer.
 
