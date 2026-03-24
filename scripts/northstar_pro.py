@@ -239,6 +239,12 @@ def _compute_formula(formula: str, context: dict) -> float:
       "round(mtd_revenue / days_in_month * 30, 2)"
     """
     try:
+        # SECURITY NOTE: ast.parse() with mode="eval" is used here for safe
+        # formula parsing only. This is NOT eval(), exec(), or dynamic code
+        # execution. The AST tree is walked manually by _compute_ast_node()
+        # which only supports a strict allowlist of operations (arithmetic,
+        # comparisons, ternary, and a small set of math functions). No code
+        # is compiled or executed from user input.
         tree = ast.parse(formula.strip(), mode="eval")
     except SyntaxError as e:
         raise ValueError(f"Invalid formula syntax: {e}")

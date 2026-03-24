@@ -1,5 +1,14 @@
 # Northstar Changelog
 
+## [2.3.0] - 2026-03-24
+
+### Fixed
+- **Privacy disclosure clarified**: SKILL.md now accurately describes that Stripe/Shopify keys stay local, and that license activation makes a single call to `api.polar.sh` for key validation. Removes the overbroad "no data sent to any third party" claim that was inaccurate.
+- **AST formula evaluator documented**: Added explicit security comment at `_compute_formula()` in `northstar_pro.py` clarifying that `ast.parse()` is used for safe syntax tree construction only -- no `eval()`, `exec()`, or dynamic code execution anywhere in the codebase.
+- **License corrected**: clawhub.json now accurately lists MIT-0 (was MIT).
+
+---
+
 ## [2.2.0] - 2026-03-23
 
 ### Added
