@@ -530,96 +530,27 @@ def format_custom_metrics_section(metrics: list[dict]) -> str:
 
 
 # ---- Multi-Channel Delivery ------------------------------------------------
+# Delivery logic lives in delivery.py (unified module). Import here for use.
+
+def _get_scripts_dir():
+    """Return the scripts directory path for delivery module import."""
+    from pathlib import Path
+    return str(Path(__file__).parent)
+
 
 def deliver_multi(message: str, config: dict, dry_run: bool = False):
     """
-    Pro multi-channel delivery. Sends to all channels in config.delivery.channels.
-    Falls back to single config.delivery.channel if channels list not set.
+    Pro multi-channel delivery. Delegates to unified delivery module.
+    Max 3 channels for Pro, 1 for Standard.
     """
-    channels = config.get("delivery", {}).get("channels", None)
-    if not channels:
-        # Single channel fallback (Standard tier behavior)
-        single = config.get("delivery", {}).get("channel", "terminal")
-        channels = [single]
-
-    if is_pro(config):
-        channels = channels[:3]  # Max 3 for Pro
-    else:
-        channels = channels[:1]  # Max 1 for Standard
-
-    results = []
-    for ch in channels:
-        if dry_run:
-            print(f"\n[DRY RUN - {ch.upper()}]\n{'='*50}\n{message}\n{'='*50}")
-            results.append((ch, True))
-        else:
-            try:
-                _send_to_channel(message, ch, config)
-                results.append((ch, True))
-            except Exception as e:
-                results.append((ch, False))
-                print(f"  Warning: {ch} delivery failed: {e}")
-
-    return results
-
-
-def _send_to_channel(message: str, channel: str, config: dict):
-    """Internal: send to a specific channel. Mirrors northstar.py deliver()."""
-    import tempfile, os, urllib.request
-
-    if channel == "terminal":
-        print("\n" + message)
-
-    elif channel == "imessage":
-        recipient = config.get("delivery", {}).get("imessage_recipient", "")
-        if not recipient:
-            raise ValueError("delivery.imessage_recipient must be set")
-        parts = message.split("\n")
-        escaped_parts = [p.replace("\\", "\\\\").replace('"', '\\"') for p in parts]
-        as_msg = ' & return & '.join(f'"{p}"' for p in escaped_parts)
-        script = f'''
-tell application "Messages"
-    set targetService to 1st account whose service type = iMessage
-    set targetBuddy to participant "{recipient}" of targetService
-    send ({as_msg}) to targetBuddy
-end tell
-'''
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".applescript", delete=False) as f:
-            f.write(script)
-            tmp_path = f.name
-        try:
-            result = subprocess.run(["osascript", tmp_path], capture_output=True, text=True)
-            if result.returncode != 0:
-                raise RuntimeError(f"iMessage failed: {result.stderr}")
-        finally:
-            os.unlink(tmp_path)
-
-    elif channel == "slack":
-        webhook = config.get("delivery", {}).get("slack_webhook", "")
-        if not webhook:
-            raise ValueError("delivery.slack_webhook must be set")
-        payload = json.dumps({"text": message}).encode()
-        req = urllib.request.Request(webhook, data=payload,
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req) as resp:
-            if resp.status != 200:
-                raise RuntimeError(f"Slack returned {resp.status}")
-
-    elif channel == "telegram":
-        chat_id = config.get("delivery", {}).get("telegram_chat_id", "")
-        bot_token = config.get("delivery", {}).get("telegram_bot_token", "")
-        if not chat_id or not bot_token:
-            raise ValueError("telegram_chat_id and telegram_bot_token required")
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        payload = json.dumps({"chat_id": chat_id, "text": message}).encode()
-        req = urllib.request.Request(url, data=payload,
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req) as resp:
-            if resp.status != 200:
-                raise RuntimeError(f"Telegram returned {resp.status}")
-
-    else:
-        raise ValueError(f"Unknown channel: {channel}")
+    import sys
+    scripts_dir = _get_scripts_dir()
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    from delivery import deliver_multi as unified_deliver_multi
+    from models import DeliveryConfig
+    max_channels = 3 if is_pro(config) else 1
+    return unified_deliver_multi(message, DeliveryConfig.from_config(config), dry_run, max_channels)
 
 
 # ---- Weekly Digest ---------------------------------------------------------

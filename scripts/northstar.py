@@ -1004,110 +1004,23 @@ def build_briefing(config: dict, stripe_data: Optional[dict], shopify_data: Opti
     return "\n".join(lines)
 
 # ---- Delivery --------------------------------------------------------------
+# Delivery logic lives in delivery.py (unified module). Import here for use.
+
+def _get_scripts_dir():
+    """Return the scripts directory path for delivery module import."""
+    from pathlib import Path
+    return str(Path(__file__).parent)
+
 
 def deliver(message: str, config: dict, dry_run: bool = False) -> bool:
-    """Send the briefing via configured channel."""
-    channel = config.get("delivery", {}).get("channel", "none")
-    # Support both 'recipient' and legacy 'imessage_recipient' keys
-    delivery = config.get("delivery", {})
-    recipient = delivery.get("recipient", "") or delivery.get("imessage_recipient", "")
-
-    if dry_run or channel == "none":
-        print("\n--- BRIEFING (dry run) ---")
-        print(message)
-        print("--- END ---\n")
-        return True
-
-    if channel == "imessage":
-        import platform as _platform
-        if _platform.system() != "Darwin":
-            raise RuntimeError(
-                "iMessage delivery requires macOS. "
-                "You're on " + _platform.system() + ".\n"
-                "Switch to Slack or Telegram delivery: run 'northstar setup' and choose a different channel."
-            )
-        if not recipient:
-            raise ValueError("delivery.recipient must be set for iMessage")
-        # Write a temp AppleScript file to handle multi-line messages safely
-        # (osascript -e can't handle multi-line strings reliably)
-        import tempfile, os
-        # Convert newlines to AppleScript line continuation
-        # AppleScript uses (return) or (ASCII character 10) for newlines
-        # Build the message as a concatenated AppleScript string
-        parts = message.split("\n")
-        # Escape double quotes in each part
-        escaped_parts = [p.replace("\\", "\\\\").replace('"', '\\"') for p in parts]
-        # Join with AppleScript return character
-        as_msg = ' & return & '.join(f'"{p}"' for p in escaped_parts)
-        script = f'''
-tell application "Messages"
-    set targetService to 1st account whose service type = iMessage
-    set targetBuddy to participant "{recipient}" of targetService
-    send ({as_msg}) to targetBuddy
-end tell
-'''
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".applescript", delete=False) as f:
-            f.write(script)
-            tmp_path = f.name
-        try:
-            result = subprocess.run(["osascript", tmp_path], capture_output=True, text=True)
-            if result.returncode != 0:
-                raise RuntimeError(f"iMessage send failed: {result.stderr}")
-        finally:
-            os.unlink(tmp_path)
-        return True
-
-    elif channel == "slack":
-        webhook = config.get("delivery", {}).get("slack_webhook", "")
-        if not webhook:
-            raise ValueError("delivery.slack_webhook must be set for Slack")
-        import urllib.request
-        payload = json.dumps({"text": message}).encode()
-        req = urllib.request.Request(webhook, data=payload, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req) as resp:
-            return resp.status == 200
-
-    elif channel == "telegram":
-        chat_id = config.get("delivery", {}).get("telegram_chat_id", "")
-        bot_token = config.get("delivery", {}).get("telegram_bot_token", "")
-        if not chat_id or not bot_token:
-            raise ValueError("delivery.telegram_chat_id and telegram_bot_token required")
-        import urllib.request
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        payload = json.dumps({"chat_id": chat_id, "text": message}).encode()
-        req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req) as resp:
-            return resp.status == 200
-
-    elif channel == "email":
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        smtp_host = delivery.get("smtp_host", "smtp.gmail.com")
-        smtp_port = int(delivery.get("smtp_port", 587))
-        smtp_user = delivery.get("smtp_user", "")
-        smtp_password = delivery.get("smtp_password", "")
-        email_to = delivery.get("email_to", "") or recipient
-        email_from = delivery.get("email_from", smtp_user)
-        if not smtp_user or not smtp_password or not email_to:
-            raise ValueError("Email delivery requires smtp_user, smtp_password, and email_to in config.")
-        now = datetime.now()
-        subject = f"Northstar Briefing - {now.strftime('%B %-d, %Y')}"
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = email_from
-        msg["To"] = email_to
-        # Plain text version
-        msg.attach(MIMEText(message, "plain"))
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(email_from, email_to, msg.as_string())
-        return True
-
-    else:
-        raise ValueError(f"Unknown delivery channel: {channel}")
+    """Send the briefing via configured channel. Delegates to unified delivery module."""
+    import sys
+    scripts_dir = _get_scripts_dir()
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    from delivery import deliver as unified_deliver
+    from models import DeliveryConfig
+    return unified_deliver(message, DeliveryConfig.from_config(config), dry_run)
 
 # ---- Commands --------------------------------------------------------------
 
