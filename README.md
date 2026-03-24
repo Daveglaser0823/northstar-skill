@@ -16,11 +16,13 @@ Wake up knowing. No tabs. No manual assembly. Your agent did the work while you 
 
 Small business operators wake up and manually check Stripe, Shopify, email, and analytics every morning. That's 20-45 minutes of tab-hopping before you can make a single decision.
 
-Your OpenClaw agent is already running 24/7. It can do this for you.
+But the real problem isn't the time. It's what you miss: 3 failed payments piling up since Tuesday. A churn spike you won't notice until MRR drops. $400 in refunds that signal a broken checkout flow. A monthly pacing miss you could fix on Day 18 but won't see until Day 30.
+
+Your dashboards show you data. They don't surface what needs your attention.
 
 ## The Solution
 
-Northstar is an OpenClaw skill that pulls your key business metrics each morning and delivers a clean briefing via iMessage, Slack, Telegram, or Email.
+Northstar is an OpenClaw skill that pulls your key business metrics each morning and delivers a clean briefing via iMessage, Slack, Telegram, or Email. It highlights anomalies, flags payment failures, and tells you whether you're on pace -- before you open a single tab.
 
 ```
 📊 Northstar Daily Briefing - March 22
