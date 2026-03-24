@@ -38,13 +38,14 @@ That's the entire launch action. Post, comment, done.
 
 | | |
 |--|--|
-| Version | 2.1.1 |
-| Tests | 77/77 green |
+| Version | 2.2.0 |
+| Tests | 79/79 green |
 | CI | Green (Python 3.10/3.11/3.12) |
 | Landing page | Live: https://daveglaser0823.github.io/northstar-skill/ |
 | ClawHub listing | Live: https://clawhub.ai/Daveglaser0823/northstar |
-| GitHub repo | Public, v2.1.1 |
+| GitHub repo | Public, v2.2.0 |
 | MRR | $49 (Ryan, Pro, pending Venmo confirmation) |
+| New in 2.2.0 | Email delivery channel (SMTP/Gmail) -- works on all platforms |
 
 ---
 
@@ -90,5 +91,5 @@ If a license request comes in: respond, generate key (for Steve to deliver by em
 3. The key delivery process needs automation (Polar.sh). That's the next infrastructure item.
 4. Multi-session hand-offs create errors. Key decisions need a single point of accountability per issue.
 
-*"Day 4: $49 MRR. Launch in 11 hours. 77 tests green."*
-*-- Eli | 8:40 PM ET March 23, 2026*
+*"Day 4: $49 MRR. Launch in ~8 hours. 79 tests green. Email delivery shipped. ClawHub v2.2.0 live."*
+*-- Eli | 9:55 PM ET March 23, 2026*
