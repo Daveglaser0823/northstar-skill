@@ -337,15 +337,15 @@ class TestCustomMetrics(unittest.TestCase):
 
 class TestWeeklyDigest(unittest.TestCase):
     STRIPE_DATA = {
-        "new_subs_yesterday": 12,
-        "churn_yesterday": 3,
+        "new_subs": 12,
+        "churned_subs": 3,
         "active_subs": 342,
         "mrr": 6498,
         "payment_failures": 0,
         "days_in_month": 31,
         "days_remaining": 9,
-        "mtd_revenue": 18430,
-        "monthly_goal": 24900,
+        "revenue_mtd": 18430,
+        "goal_dollars": 24900,
     }
 
     def test_builds_weekly_digest(self):

@@ -659,8 +659,8 @@ def build_weekly_digest(config: dict,
         lines += [
             "",
             "Stripe (this week):",
-            f"  New subscribers: {stripe_data.get('new_subs_yesterday', 0)}",
-            f"  Churned: {stripe_data.get('churn_yesterday', 0)}",
+            f"  New subscribers: {stripe_data.get('new_subs', 0)}",
+            f"  Churned: {stripe_data.get('churned_subs', 0)}",
             f"  Active subscribers: {stripe_data.get('active_subs', 0)}",
             f"  MRR: ${stripe_data.get('mrr', 0):,.0f}",
         ]
@@ -672,17 +672,17 @@ def build_weekly_digest(config: dict,
         lines += [
             "",
             "Shopify (this week):",
-            f"  Orders: {shopify_data.get('orders_yesterday', 0)}",
-            f"  Revenue: ${shopify_data.get('revenue_yesterday', 0):,.0f}",
-            f"  Refunds: {shopify_data.get('refunds_yesterday', 0)}",
+            f"  Orders: {shopify_data.get('orders_total', 0)}",
+            f"  Fulfilled: {shopify_data.get('orders_fulfilled', 0)}",
+            f"  Refunds: {shopify_data.get('refunds_count', 0)} (${shopify_data.get('refund_total', 0):,.0f})",
         ]
 
     # Monthly pacing
     if stripe_data:
         days_in_month = stripe_data.get("days_in_month", 30)
         days_remaining = stripe_data.get("days_remaining", 0)
-        mtd = stripe_data.get("mtd_revenue", 0)
-        goal = stripe_data.get("monthly_goal", 0)
+        mtd = stripe_data.get("revenue_mtd", 0)
+        goal = stripe_data.get("goal_dollars", 0)
         if goal and days_in_month:
             elapsed = days_in_month - days_remaining
             daily_rate = mtd / elapsed if elapsed > 0 else 0
@@ -777,18 +777,18 @@ def build_pro_additions(config: dict,
         if stripe_data:
             context.update({
                 "stripe_revenue": stripe_data.get("revenue_yesterday", 0),
-                "stripe_new_subs": stripe_data.get("new_subs_yesterday", 0),
-                "stripe_churn": stripe_data.get("churn_yesterday", 0),
+                "stripe_new_subs": stripe_data.get("new_subs", 0),
+                "stripe_churn": stripe_data.get("churned_subs", 0),
                 "stripe_mrr": stripe_data.get("mrr", 0),
-                "mtd_revenue": stripe_data.get("mtd_revenue", 0),
+                "mtd_revenue": stripe_data.get("revenue_mtd", 0),
                 "days_in_month": stripe_data.get("days_in_month", 30),
                 "days_remaining": stripe_data.get("days_remaining", 0),
             })
         if shopify_data:
             context.update({
-                "shopify_revenue": shopify_data.get("revenue_yesterday", 0),
-                "shopify_orders": shopify_data.get("orders_yesterday", 0),
-                "shopify_refunds": shopify_data.get("refunds_yesterday", 0),
+                "shopify_revenue": shopify_data.get("refund_total", 0),  # TODO: add real revenue to ShopifyMetrics when API supports it
+                "shopify_orders": shopify_data.get("orders_total", 0),
+                "shopify_refunds": shopify_data.get("refunds_count", 0),
             })
         custom = evaluate_custom_metrics(config, context)
         section = format_custom_metrics_section(custom)

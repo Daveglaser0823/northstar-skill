@@ -238,6 +238,7 @@ def fetch_stripe_metrics(api_key: str, goal_dollars: float, currency: str = "usd
         "goal_dollars": goal_dollars,
         "goal_pct": goal_pct,
         "days_remaining": days_remaining,
+        "days_in_month": days_in_month,
         "on_track": on_track,
         "projected_month": projected_month,
         "active_subs": total_active,
@@ -245,6 +246,7 @@ def fetch_stripe_metrics(api_key: str, goal_dollars: float, currency: str = "usd
         "churned_subs": churned_count,
         "payment_failures": payment_failures,
         "retries_pending": retries_pending,
+        "mrr": 0.0,  # TODO: compute from active subscriptions when needed
     }
 
 # ---- Shopify ---------------------------------------------------------------
