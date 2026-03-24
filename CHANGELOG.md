@@ -1,5 +1,20 @@
 # Northstar Changelog
 
+## [2.6.0] - 2026-03-24
+
+### Security
+- **Redacted customer PII from public files** (Issue #2): Exposed license key (NSP-KCN9-OOSO-P3Y3, now burned) and customer email address removed from 5 public markdown files: LAUNCH-MORNING-BRIEF.md, CUSTOMER-RESPONSE-UPDATED.md, LAUNCH-DAY-BRIEF.md, LAUNCH-BRIEF-FINAL.md, PRIVATE-KEY-DELIVERY.md. Both values replaced with `[REDACTED]` placeholders.
+- **Pre-release checklist updated**: Added mandatory PII/license key grep check (section 2a) to `docs/RELEASE-CHECKLIST.md`. Must pass before every push to the public repo.
+- Affected customer issued a new key via private email only.
+
+### Root Cause
+Operational handoff notes containing customer license key and email address were committed to the public repo as markdown files. These files were internal session docs that should never have been in a git-tracked directory. Fix: no customer PII in any file committed to the public repo, ever.
+
+### Tested by: Eli
+- Grep verification: zero remaining email/key patterns in tracked files post-commit.
+
+---
+
 ## [2.5.0] - 2026-03-24
 
 ### Fixed

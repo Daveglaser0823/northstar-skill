@@ -30,6 +30,26 @@ grep -rn "payment link\|a link\|send a link" . --include="*.md" | grep -v ".git"
 ```
 - [ ] No templates promise "a payment link" -- the payment method is Venmo/PayPal, not a link
 
+### 2a. PII and License Key Security Check (MANDATORY)
+**Before every git push to the public repo:**
+
+```bash
+# Check for email addresses
+grep -rn "@gmail\.com\|@yahoo\.com\|@icloud\.com\|@me\.com\|@hotmail\.com" . --include="*.md" | grep -v ".git"
+
+# Check for license key patterns (NSP-xxxx or NSS-xxxx format)
+grep -rn "NS[PS]-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . --include="*.md" | grep -v ".git"
+
+# Check for any key-looking patterns
+grep -rn "\"key\":\|License Key:\|license key\|activate " . --include="*.md" | grep -v ".git" | grep -v "REDACTED"
+```
+
+- [ ] **Zero email addresses** belonging to customers in any tracked file
+- [ ] **Zero license keys** (NSP-xxxx or NSS-xxxx patterns) in any tracked file
+- [ ] Any operational doc containing PII is either: (a) in `.gitignore`, or (b) never committed to the repo
+
+**Rule:** If a file needs to contain a customer email, key, or payment receipt -- it must NOT be committed to the public repo. Keep it local or in a private channel only.
+
 ### 3. README Accuracy Check
 - [ ] Every command in the README actually works when copy-pasted into a fresh terminal
 - [ ] The `northstar activate` command format matches the actual activation code
@@ -82,3 +102,4 @@ Before shipping any doc update:
 | Date | Change | Author |
 |------|--------|--------|
 | March 24, 2026 | Created per board action item (Ryan Venmo incident) | Eli |
+| March 24, 2026 | Added 2a: PII/license key security check (Issue #2 - key + email exposure) | Eli |
