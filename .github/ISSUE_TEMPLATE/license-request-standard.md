@@ -9,7 +9,7 @@ assignees: ''
 ## Northstar Standard License Request
 
 **Your email address:**
-(We'll send your license key and invoice here)
+(We'll send your license key to this address)
 
 **How did you hear about Northstar?**
 - [ ] LinkedIn (Man and Machine series)
@@ -31,9 +31,13 @@ assignees: ''
 
 ---
 
-After submitting this issue, you'll receive:
-1. A payment link (Standard tier: $19/month)
-2. A license key once payment is confirmed
-3. Instructions to activate with `northstar activate <key>`
+## What happens next
+
+1. We'll respond to this issue within a few hours (usually much faster)
+2. **Payment:** Venmo **@Daveglaser-3** · $19 · note "Northstar Standard"
+3. **Key delivery:** We'll email your license key once payment lands
+4. **Activate:** `northstar activate YOUR-KEY`
+
+If you prefer to handle this over email directly: **steve.glaser.ops@gmail.com** with subject `Northstar Standard - [your GitHub handle]`
 
 Questions? Comment on this issue or check [INSTALL.md](https://github.com/Daveglaser0823/northstar-skill/blob/main/INSTALL.md).
