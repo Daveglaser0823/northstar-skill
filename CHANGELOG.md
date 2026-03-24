@@ -1,5 +1,30 @@
 # Northstar Changelog
 
+## [2.8.0] - 2026-03-24
+
+### Security (P0 Fix)
+- **HMAC license token prevents tier spoofing via config edit** (Board RED feedback): Previously, editing `northstar.json` to set `"tier": "pro"` granted full Pro access without payment. Now `is_pro()` verifies a cryptographic HMAC token written at activation time. A user cannot forge a valid token by editing the config.
+- `northstar.py`: Added `sign_license_token()`, `verify_license_token()`, and embedded HMAC secret.
+- `cmd_activate()`: Writes `license_token` (HMAC of key+tier) to config at activation.
+- `northstar_pro.py`: `is_pro()` now calls `verify_license_token()` -- `tier` field alone is insufficient.
+- **Backward compatible**: Existing NSP- keys without a token are still accepted (legacy activations).
+
+### Tests
+- Added 9 acceptance tests covering paywall bypass scenarios:
+  - Tier spoofing without key → rejected
+  - Tier spoofing with wrong/forged token → rejected
+  - Mismatched key → rejected
+  - Legacy NSP- key without token → accepted (backward compat)
+  - Legacy NSS- key claiming pro tier → rejected
+  - `verify_license_token()` directly tested for tampered tier
+
+### Tested by: Eli
+- 42/42 tests passing after changes.
+- Verified: `{"tier": "pro"}` alone → `is_pro()` returns False.
+- Verified: correct key+token → `is_pro()` returns True.
+
+---
+
 ## [2.7.0] - 2026-03-24
 
 ### Fixed

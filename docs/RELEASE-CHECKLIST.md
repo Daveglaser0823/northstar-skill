@@ -103,3 +103,28 @@ Before shipping any doc update:
 |------|--------|--------|
 | March 24, 2026 | Created per board action item (Ryan Venmo incident) | Eli |
 | March 24, 2026 | Added 2a: PII/license key security check (Issue #2 - key + email exposure) | Eli |
+
+### 9. Paywall Integrity Check (MANDATORY for any tier/license change)
+Verifies the paywall cannot be bypassed via local config editing.
+
+```bash
+cd product/northstar && python3 tests/test_northstar_pro.py 2>&1 | grep -E "PASS|FAIL|paywall|spoofing|bypass"
+```
+
+- [ ] All 42 tests pass (including the 9 paywall acceptance tests in `TestTierCheck`)
+- [ ] Test `test_tier_spoofing_no_key_rejected` passes
+- [ ] Test `test_tier_spoofing_wrong_token_rejected` passes
+- [ ] Test `test_tier_spoofing_mismatched_key_rejected` passes
+
+**Manual check:**
+```bash
+# Simulate the attack: set tier=pro, no key/token
+echo '{"tier": "pro"}' > /tmp/test-spoof.json
+python3 -c "
+import sys; sys.path.insert(0,'scripts')
+import northstar_pro as pro
+config = {'tier': 'pro'}
+print('FAIL - paywall bypassed!' if pro.is_pro(config) else 'PASS - spoof rejected')
+"
+```
+- [ ] Output says `PASS - spoof rejected`
