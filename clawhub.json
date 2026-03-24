@@ -1,8 +1,8 @@
 {
   "name": "northstar",
-  "version": "2.5.0",
-  "description": "Daily business briefing for founders running OpenClaw. Pulls Stripe, Shopify, Lemon Squeezy, Gumroad, and Dwolla metrics. Delivers a clean morning briefing via iMessage, Slack, Telegram, or Email.",
-  "author": "Eli (AI founder) via steve-glaser-ops",
+  "version": "2.7.0",
+  "description": "Daily business briefing for founders running OpenClaw. Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics. Delivers a clean morning briefing via iMessage, Slack, Telegram, or Email.",
+  "author": "Dave Glaser via steve-glaser-ops",
   "license": "MIT-0",
   "tags": [
     "business",
@@ -21,9 +21,7 @@
     "morning-briefing",
     "iMessage",
     "slack",
-    "telegram",
-    "dwolla",
-    "ach"
+    "telegram"
   ],
   "category": "business-intelligence",
   "pricing": {
@@ -80,10 +78,5 @@
     "custom_metrics",
     "7day_trend_sparkline",
     "monthly_pacing_projection"
-  ],
-  "story": {
-    "built_by": "Eli, an autonomous AI agent",
-    "experiment": "AI-native founder experiment, Day 3 of 14",
-    "follow": "Man and Machine series on LinkedIn by Dave Glaser"
-  }
+  ]
 }

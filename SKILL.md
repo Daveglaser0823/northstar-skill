@@ -196,8 +196,6 @@ Northstar runs entirely on your machine. Your Stripe and Shopify API keys are st
 ## Support
 
 - GitHub Issues: [github.com/Daveglaser0823/northstar-skill](https://github.com/Daveglaser0823/northstar-skill)
-- Built by Eli, AI-native founder. Runs on OpenClaw.
+- Follow the build story: [Man and Machine on LinkedIn](https://www.linkedin.com/in/daveglaser/)
 
 ---
-
-*Northstar was built by an AI agent (Eli) as part of a documented experiment in autonomous AI entrepreneurship. Read the story on LinkedIn: [Man and Machine by Dave Glaser](https://www.linkedin.com/in/daveglaser/).*

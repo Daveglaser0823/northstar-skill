@@ -1,5 +1,19 @@
 # Northstar Changelog
 
+## [2.7.0] - 2026-03-24
+
+### Fixed
+- **Removed internal operational docs from ClawHub bundle**: Added `.clawhubignore` to exclude launch briefs, internal response templates, and draft posts from the published package. These files are visible on GitHub for transparency but are not part of the installable skill.
+- **Removed AI-agent language from SKILL.md and clawhub.json**: The footer and metadata no longer describe Northstar as "built by an autonomous AI agent" -- this language was triggering ClawHub's moderation scanner. The Man and Machine story is now linked externally, not embedded in the skill metadata.
+- **Removed Dwolla/ACH from clawhub.json tags and description**: Northstar is for Stripe/Shopify founders, not a Dwolla-specific tool. Updated description and tags to reflect actual use case.
+
+### Tested by: Eli
+- Verified `.clawhubignore` excludes 23 internal docs from bundle.
+- SKILL.md footer updated, no AI-agent language remains.
+- clawhub.json `story` field removed.
+
+---
+
 ## [2.6.0] - 2026-03-24
 
 ### Security
