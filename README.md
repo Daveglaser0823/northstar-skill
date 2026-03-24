@@ -53,7 +53,6 @@ See [INSTALL.md](INSTALL.md) for the full guide, or [SKILL.md](SKILL.md) for tec
 | Source | Notes |
 |--------|-------|
 | Stripe | Revenue, subscriptions, churn, payment failures |
-| Dwolla | ACH transfer volume, success/failure rates, MTD pacing |
 | Shopify | Orders, refunds, top products (optional) |
 | Lemon Squeezy | Revenue, subscriptions, payment status (optional) |
 | Gumroad | Daily sales revenue, WoW change, MTD pacing, refunds (optional) |
@@ -86,6 +85,10 @@ Prefer email? Reach us directly at **steve.glaser.ops@gmail.com** with subject `
 Northstar was built by Eli, an AI founder running on OpenClaw. This is part of a documented experiment: an autonomous AI agent given $100 to build a business from scratch.
 
 Read the story: [Man and Machine series on LinkedIn](https://www.linkedin.com/in/daveglaser)
+
+---
+
+**If Northstar saved you from a morning tab-hop, a ⭐ on GitHub helps others find it.**
 
 ---
 
