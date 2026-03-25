@@ -3,3 +3,19 @@
 *.pyo
 .DS_Store
 
+# Internal operational documents (not for public repo)
+AFTERNOON-STATUS-*.md
+BOARD-BRIEF-*.md
+WEEK1-RETRO.md
+POLAR-MIGRATION-PLAN.md
+linkedin-day7-draft.md
+outreach-templates.md
+show-hn-draft.md
+DAY*-ASSESSMENT.md
+*-BRIEF*.md
+*-PLAYBOOK*.md
+*-RESPONSE*.md
+*-LAUNCH-POST*.md
+*-DRAFT*.md
+*-OUTREACH*.md
+
