@@ -8,11 +8,9 @@ Phase 2 Step 7
 import sys
 import json
 import io
-import os
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from datetime import datetime
+from unittest.mock import patch
 
 # Add scripts dir to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))

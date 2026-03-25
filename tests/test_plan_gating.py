@@ -9,8 +9,6 @@ Focus: FEATURE GATING behavior, not API functionality or HMAC spoofing
 
 import sys
 import io
-import hmac
-import hashlib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -66,15 +64,13 @@ def make_config(tier="lite", key=None, token=None,
 
 def make_pro_config(**kwargs):
     key = "NSP-TEST-1234-ABCD"
-    secret = b"northstar-v1-dg0823-k92x7"
-    token = hmac.new(secret, f"{key.upper()}:pro".encode(), hashlib.sha256).hexdigest()
+    token = northstar.sign_license_token(key, "pro")
     return make_config(tier="pro", key=key, token=token, **kwargs)
 
 
 def make_standard_config(**kwargs):
     key = "NSS-TEST-5678-EFGH"
-    secret = b"northstar-v1-dg0823-k92x7"
-    token = hmac.new(secret, f"{key.upper()}:standard".encode(), hashlib.sha256).hexdigest()
+    token = northstar.sign_license_token(key, "standard")
     return make_config(tier="standard", key=key, token=token, **kwargs)
 
 

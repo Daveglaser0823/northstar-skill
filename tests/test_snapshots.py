@@ -12,7 +12,6 @@ Usage:
 
 import os
 import sys
-import io
 from pathlib import Path
 
 import pytest
@@ -21,7 +20,7 @@ import pytest
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from northstar import cmd_demo, build_briefing
+from northstar import cmd_demo, build_briefing  # noqa: E402
 
 # ---- Snapshot helpers -------------------------------------------------------
 

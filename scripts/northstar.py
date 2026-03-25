@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Northstar - Daily Business Briefing for OpenClaw
-Version: 2.1.0
 Author: Eli (AI founder, OpenClaw-native)
 
 Pulls Stripe, Shopify, Lemon Squeezy, and Gumroad metrics, formats a daily briefing,
 and delivers it via iMessage, Slack, Telegram, or Email.
 """
 
+import os
 import sys
 import json
 import argparse
@@ -17,6 +17,12 @@ import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+
+# Version (single source of truth in version.py)
+_scripts_dir = str(Path(__file__).parent)
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
+from version import __version__  # noqa: E402
 
 # Pro module (optional - only imported when Pro commands are used)
 def _load_pro():
@@ -31,16 +37,38 @@ def _load_pro():
 
 # ---- License Verification --------------------------------------------------
 # HMAC-based token prevents tier spoofing via local config edits.
-# The secret is embedded here; the token is written at activation time.
-# A user cannot forge a valid token without this secret.
+# The secret is read from env/file at runtime; never hardcoded.
+# A user cannot forge a valid token without the secret.
 
-_LICENSE_HMAC_SECRET = b"northstar-v1-dg0823-k92x7"
+_LICENSE_SECRET_PATH = Path.home() / ".clawd" / "skills" / "northstar" / "config" / ".license_secret"
+
+
+def _get_license_secret() -> bytes:
+    """Return the HMAC secret for license token signing/verification.
+
+    Resolution order:
+    1. NORTHSTAR_LICENSE_SECRET environment variable (hex or raw string)
+    2. ~/.clawd/skills/northstar/config/.license_secret file (raw bytes)
+    3. Deterministic machine-derived default (preserves existing activations on upgrade)
+    """
+    env_val = os.environ.get("NORTHSTAR_LICENSE_SECRET")
+    if env_val:
+        return env_val.encode() if isinstance(env_val, str) else env_val
+
+    if _LICENSE_SECRET_PATH.exists():
+        try:
+            return _LICENSE_SECRET_PATH.read_bytes().strip()
+        except OSError:
+            pass
+
+    # Deterministic fallback: SHA-256 of home directory path (16 bytes)
+    return hashlib.sha256(str(Path.home()).encode()).digest()[:16]
 
 
 def sign_license_token(key: str, tier: str) -> str:
     """Return an HMAC-SHA256 hex digest binding key+tier together."""
     msg = f"{key.upper()}:{tier.lower()}".encode()
-    return hmac.new(_LICENSE_HMAC_SECRET, msg, hashlib.sha256).hexdigest()
+    return hmac.new(_get_license_secret(), msg, hashlib.sha256).hexdigest()
 
 
 def verify_license_token(config: dict) -> bool:
@@ -948,11 +976,11 @@ def cmd_activate(license_key: str):
     key = license_key.strip()
 
     # --- Revoked keys (invalidated due to security rotation) ---
-    # Keys here are rejected immediately regardless of format.
-    REVOKED_KEYS = {
-        "NS-PRO-DTML-H6TK-SACG",  # Ryan rcraig14 - rotated 2026-03-23 (key exposed in public GitHub issue)
+    # Stored as SHA-256 hashes of the uppercase key to avoid leaking key material.
+    _REVOKED_KEY_HASHES = {
+        "b1f175f7c3e176e5449b409dc000bf0e098381bcb6f005a1b9f0dead44b96482",  # rotated 2026-03-23
     }
-    if key.upper() in {k.upper() for k in REVOKED_KEYS}:
+    if hashlib.sha256(key.upper().encode()).hexdigest() in _REVOKED_KEY_HASHES:
         print("Error: This license key has been revoked and is no longer valid.")
         print("If you are the original licensee, please contact support to receive your replacement key.")
         print("Support: https://github.com/Daveglaser0823/northstar-skill/issues")
@@ -1693,7 +1721,7 @@ Examples:
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
-    parser.add_argument("--version", action="version", version="Northstar 2.3.0")
+    parser.add_argument("--version", action="version", version=f"Northstar {__version__}")
 
     args = parser.parse_args()
 

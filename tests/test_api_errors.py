@@ -21,7 +21,7 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 # Add scripts dir to path (same pattern as other test files)
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
