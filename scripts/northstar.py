@@ -140,114 +140,119 @@ def fetch_stripe_metrics(api_key: str, goal_dollars: float, currency: str = "usd
     week_ago_start = yesterday_start - timedelta(days=7)
     week_ago_end = yesterday_end - timedelta(days=7)
 
-    # Yesterday's charges
-    charges_yesterday = stripe.Charge.list(
-        created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
-        limit=100
-    )
-    revenue_yesterday = sum(
-        c["amount"] for c in charges_yesterday.auto_paging_iter()
-        if c["status"] == "succeeded" and c["currency"] == currency
-    ) / 100.0
+    try:
+        # Yesterday's charges
+        charges_yesterday = stripe.Charge.list(
+            created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
+            limit=100
+        )
+        revenue_yesterday = sum(
+            c["amount"] for c in charges_yesterday.auto_paging_iter()
+            if c["status"] == "succeeded" and c["currency"] == currency
+        ) / 100.0
 
-    # Same day last week (for WoW)
-    charges_last_week = stripe.Charge.list(
-        created={"gte": int(week_ago_start.timestamp()), "lt": int(week_ago_end.timestamp())},
-        limit=100
-    )
-    revenue_last_week = sum(
-        c["amount"] for c in charges_last_week.auto_paging_iter()
-        if c["status"] == "succeeded" and c["currency"] == currency
-    ) / 100.0
+        # Same day last week (for WoW)
+        charges_last_week = stripe.Charge.list(
+            created={"gte": int(week_ago_start.timestamp()), "lt": int(week_ago_end.timestamp())},
+            limit=100
+        )
+        revenue_last_week = sum(
+            c["amount"] for c in charges_last_week.auto_paging_iter()
+            if c["status"] == "succeeded" and c["currency"] == currency
+        ) / 100.0
 
-    # Month-to-date revenue
-    charges_mtd = stripe.Charge.list(
-        created={"gte": int(month_start.timestamp()), "lt": int(yesterday_end.timestamp())},
-        limit=100
-    )
-    revenue_mtd = sum(
-        c["amount"] for c in charges_mtd.auto_paging_iter()
-        if c["status"] == "succeeded" and c["currency"] == currency
-    ) / 100.0
+        # Month-to-date revenue
+        charges_mtd = stripe.Charge.list(
+            created={"gte": int(month_start.timestamp()), "lt": int(yesterday_end.timestamp())},
+            limit=100
+        )
+        revenue_mtd = sum(
+            c["amount"] for c in charges_mtd.auto_paging_iter()
+            if c["status"] == "succeeded" and c["currency"] == currency
+        ) / 100.0
 
-    # Active subscriptions
-    active_subs = stripe.Subscription.list(status="active", limit=1)
-    total_active = active_subs.get("total_count", 0)
-    if total_active == 0:
-        # Fallback: count via list if total_count not available
-        all_active = list(stripe.Subscription.list(status="active", limit=100).auto_paging_iter())
-        total_active = len(all_active)
+        # Active subscriptions
+        active_subs = stripe.Subscription.list(status="active", limit=1)
+        total_active = active_subs.get("total_count", 0)
+        if total_active == 0:
+            # Fallback: count via list if total_count not available
+            all_active = list(stripe.Subscription.list(status="active", limit=100).auto_paging_iter())
+            total_active = len(all_active)
 
-    # New subscribers yesterday
-    new_subs = stripe.Subscription.list(
-        created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
-        status="active",
-        limit=100
-    )
-    new_sub_count = len(list(new_subs.auto_paging_iter()))
+        # New subscribers yesterday
+        new_subs = stripe.Subscription.list(
+            created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
+            status="active",
+            limit=100
+        )
+        new_sub_count = len(list(new_subs.auto_paging_iter()))
 
-    # Churned subscribers yesterday (canceled_at is when cancellation happened)
-    canceled_subs = stripe.Subscription.list(
-        status="canceled",
-        limit=100
-    )
-    churned_count = sum(
-        1 for sub in canceled_subs.auto_paging_iter()
-        if sub.get("canceled_at") and
-        int(yesterday_start.timestamp()) <= sub["canceled_at"] < int(yesterday_end.timestamp())
-    )
+        # Churned subscribers yesterday (canceled_at is when cancellation happened)
+        canceled_subs = stripe.Subscription.list(
+            status="canceled",
+            limit=100
+        )
+        churned_count = sum(
+            1 for sub in canceled_subs.auto_paging_iter()
+            if sub.get("canceled_at") and
+            int(yesterday_start.timestamp()) <= sub["canceled_at"] < int(yesterday_end.timestamp())
+        )
 
-    # Payment failures
-    failed_charges = stripe.Charge.list(
-        created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
-        limit=100
-    )
-    payment_failures = len([
-        c for c in failed_charges.auto_paging_iter()
-        if c["status"] in ("failed",)
-    ])
-    # Also check for requires_action (retries pending)
-    all_recent = stripe.PaymentIntent.list(
-        created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
-        limit=100
-    )
-    retries_pending = len([
-        pi for pi in all_recent.auto_paging_iter()
-        if pi["status"] == "requires_payment_method"
-    ])
+        # Payment failures
+        failed_charges = stripe.Charge.list(
+            created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
+            limit=100
+        )
+        payment_failures = len([
+            c for c in failed_charges.auto_paging_iter()
+            if c["status"] in ("failed",)
+        ])
+        # Also check for requires_action (retries pending)
+        all_recent = stripe.PaymentIntent.list(
+            created={"gte": int(yesterday_start.timestamp()), "lt": int(yesterday_end.timestamp())},
+            limit=100
+        )
+        retries_pending = len([
+            pi for pi in all_recent.auto_paging_iter()
+            if pi["status"] == "requires_payment_method"
+        ])
 
-    # WoW change
-    wow_change = None
-    if revenue_last_week > 0:
-        wow_change = ((revenue_yesterday - revenue_last_week) / revenue_last_week) * 100
+        # WoW change
+        wow_change = None
+        if revenue_last_week > 0:
+            wow_change = ((revenue_yesterday - revenue_last_week) / revenue_last_week) * 100
 
-    # MTD pacing
-    days_in_month = (datetime(now.year, now.month % 12 + 1, 1) - timedelta(days=1)).day if now.month < 12 else 31
-    days_elapsed = now.day - 1  # days completed
-    days_remaining = days_in_month - days_elapsed
-    goal_pct = (revenue_mtd / goal_dollars * 100) if goal_dollars > 0 else None
-    daily_run_rate = revenue_mtd / days_elapsed if days_elapsed > 0 else 0
-    projected_month = daily_run_rate * days_in_month if daily_run_rate > 0 else 0
-    on_track = projected_month >= goal_dollars if goal_dollars > 0 else None
+        # MTD pacing
+        days_in_month = (datetime(now.year, now.month % 12 + 1, 1) - timedelta(days=1)).day if now.month < 12 else 31
+        days_elapsed = now.day - 1  # days completed
+        days_remaining = days_in_month - days_elapsed
+        goal_pct = (revenue_mtd / goal_dollars * 100) if goal_dollars > 0 else None
+        daily_run_rate = revenue_mtd / days_elapsed if days_elapsed > 0 else 0
+        projected_month = daily_run_rate * days_in_month if daily_run_rate > 0 else 0
+        on_track = projected_month >= goal_dollars if goal_dollars > 0 else None
 
-    return {
-        "revenue_yesterday": revenue_yesterday,
-        "revenue_last_week_same_day": revenue_last_week,
-        "wow_change_pct": wow_change,
-        "revenue_mtd": revenue_mtd,
-        "goal_dollars": goal_dollars,
-        "goal_pct": goal_pct,
-        "days_remaining": days_remaining,
-        "days_in_month": days_in_month,
-        "on_track": on_track,
-        "projected_month": projected_month,
-        "active_subs": total_active,
-        "new_subs": new_sub_count,
-        "churned_subs": churned_count,
-        "payment_failures": payment_failures,
-        "retries_pending": retries_pending,
-        "mrr": 0.0,  # TODO: compute from active subscriptions when needed
-    }
+        return {
+            "revenue_yesterday": revenue_yesterday,
+            "revenue_last_week_same_day": revenue_last_week,
+            "wow_change_pct": wow_change,
+            "revenue_mtd": revenue_mtd,
+            "goal_dollars": goal_dollars,
+            "goal_pct": goal_pct,
+            "days_remaining": days_remaining,
+            "days_in_month": days_in_month,
+            "on_track": on_track,
+            "projected_month": projected_month,
+            "active_subs": total_active,
+            "new_subs": new_sub_count,
+            "churned_subs": churned_count,
+            "payment_failures": payment_failures,
+            "retries_pending": retries_pending,
+            "mrr": 0.0,  # TODO: compute from active subscriptions when needed
+        }
+    except RuntimeError:
+        raise
+    except Exception as e:
+        raise RuntimeError(f"Stripe request failed: {e}")
 
 # ---- Shopify ---------------------------------------------------------------
 
@@ -267,8 +272,11 @@ def fetch_shopify_metrics(shop_domain: str, access_token: str) -> dict:
     def shopify_get(endpoint: str) -> dict:
         url = f"https://{shop_domain}/admin/api/2024-01/{endpoint}"
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read())
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.loads(resp.read())
+        except Exception as e:
+            raise RuntimeError(f"Shopify request failed ({endpoint}): {e}")
 
     # Yesterday's orders
     params = (
@@ -461,8 +469,11 @@ def fetch_lemon_squeezy_metrics(api_key: str, goal_dollars: float = 0) -> dict:
         if params:
             url += "?" + urllib.parse.urlencode(params)
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return json.loads(resp.read())
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.loads(resp.read())
+        except Exception as e:
+            raise RuntimeError(f"Lemon Squeezy request failed ({path}): {e}")
 
     now = datetime.now()
     yesterday_start = datetime(now.year, now.month, now.day) - timedelta(days=1)

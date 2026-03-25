@@ -81,79 +81,67 @@ class TestStripeErrors(unittest.TestCase):
 
     # --- 1a. Auth failure (401/403) -----------------------------------------
 
-    @unittest.expectedFailure
     def test_stripe_auth_failure_raises_clear_error(self):
         """
         Auth failure (invalid API key): Stripe raises stripe.error.AuthenticationError.
-        The adapter has NO top-level try/except so this propagates as an unhandled
-        AuthenticationError traceback. Marked expectedFailure to document the gap.
+        The adapter wraps all exceptions in RuntimeError with a clear message.
         """
         stripe = MagicMock()
         auth_err = Exception("No such API key: sk_test_fake")
-        auth_err.__class__.__name__ = "AuthenticationError"
         stripe.Charge.list.side_effect = auth_err
 
         with patch.dict("sys.modules", {"stripe": stripe}):
-            # Should raise a clear RuntimeError or return an error dict --
-            # but currently it propagates the raw Stripe exception.
-            result = northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
-            # If it returns a dict (graceful), test passes trivially.
-            # If it raises a clear exception, assert it's RuntimeError:
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
+            self.assertIn("Stripe request failed", str(ctx.exception))
 
     # --- 1b. Rate limit (429) -----------------------------------------------
 
-    @unittest.expectedFailure
     def test_stripe_rate_limit_handled_gracefully(self):
         """
         Rate limit (429): Stripe raises stripe.error.RateLimitError.
-        The adapter has NO top-level try/except, so this is an unhandled crash.
-        Marked expectedFailure to document the gap.
+        The adapter wraps all exceptions in RuntimeError with a clear message.
         """
         stripe = MagicMock()
         rate_err = Exception("Rate limit exceeded")
-        rate_err.__class__.__name__ = "RateLimitError"
         stripe.Charge.list.side_effect = rate_err
 
         with patch.dict("sys.modules", {"stripe": stripe}):
-            result = northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
+            self.assertIn("Stripe request failed", str(ctx.exception))
 
     # --- 1c. Server error (500) ---------------------------------------------
 
-    @unittest.expectedFailure
     def test_stripe_server_error_handled_gracefully(self):
         """
         Server error (500): Stripe raises stripe.error.APIError.
-        The adapter has NO top-level try/except; crash is unhandled.
-        Marked expectedFailure to document the gap.
+        The adapter wraps all exceptions in RuntimeError with a clear message.
         """
         stripe = MagicMock()
         api_err = Exception("Internal Server Error")
-        api_err.__class__.__name__ = "APIError"
         stripe.Charge.list.side_effect = api_err
 
         with patch.dict("sys.modules", {"stripe": stripe}):
-            result = northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
+            self.assertIn("Stripe request failed", str(ctx.exception))
 
     # --- 1d. Timeout --------------------------------------------------------
 
-    @unittest.expectedFailure
     def test_stripe_timeout_handled_gracefully(self):
         """
         Network timeout: Stripe raises stripe.error.Timeout.
-        The adapter has NO top-level try/except; crash is unhandled.
-        Marked expectedFailure to document the gap.
+        The adapter wraps all exceptions in RuntimeError with a clear message.
         """
         stripe = MagicMock()
         timeout_err = Exception("Request timed out")
-        timeout_err.__class__.__name__ = "Timeout"
         stripe.Charge.list.side_effect = timeout_err
 
         with patch.dict("sys.modules", {"stripe": stripe}):
-            result = northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_stripe_metrics("sk_test_fake", 10000.0)
+            self.assertIn("Stripe request failed", str(ctx.exception))
 
     # --- 1e. Empty/malformed response --------------------------------------
 
@@ -188,56 +176,51 @@ class TestShopifyErrors(unittest.TestCase):
 
     # --- 2a. Auth failure (401) ---------------------------------------------
 
-    @unittest.expectedFailure
     def test_shopify_auth_failure_handled(self):
         """
         Auth failure (401): urllib raises HTTPError(401).
-        shopify_get() has NO try/except; the raw HTTPError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        shopify_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_http_error(401, "Unauthorized")):
-            result = northstar.fetch_shopify_metrics("test.myshopify.com", "bad_token")
-            # If graceful, should be a dict or raise RuntimeError (not HTTPError)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_shopify_metrics("test.myshopify.com", "bad_token")
+            self.assertIn("Shopify request failed", str(ctx.exception))
 
     # --- 2b. Rate limit (429) -----------------------------------------------
 
-    @unittest.expectedFailure
     def test_shopify_rate_limit_handled(self):
         """
         Rate limit (429): urllib raises HTTPError(429).
-        shopify_get() has NO try/except; raw HTTPError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        shopify_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_http_error(429, "Too Many Requests")):
-            result = northstar.fetch_shopify_metrics("test.myshopify.com", "token")
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_shopify_metrics("test.myshopify.com", "token")
+            self.assertIn("Shopify request failed", str(ctx.exception))
 
     # --- 2c. Server error (500) ---------------------------------------------
 
-    @unittest.expectedFailure
     def test_shopify_server_error_handled(self):
         """
         Server error (500): urllib raises HTTPError(500).
-        shopify_get() has NO try/except; raw HTTPError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        shopify_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_http_error(500, "Internal Server Error")):
-            result = northstar.fetch_shopify_metrics("test.myshopify.com", "token")
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_shopify_metrics("test.myshopify.com", "token")
+            self.assertIn("Shopify request failed", str(ctx.exception))
 
     # --- 2d. Timeout --------------------------------------------------------
 
-    @unittest.expectedFailure
     def test_shopify_timeout_handled(self):
         """
         Network timeout: urllib raises URLError(socket.timeout).
-        shopify_get() has NO try/except; raw URLError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        shopify_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_url_error_timeout()):
-            result = northstar.fetch_shopify_metrics("test.myshopify.com", "token")
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_shopify_metrics("test.myshopify.com", "token")
+            self.assertIn("Shopify request failed", str(ctx.exception))
 
     # --- 2e. Empty/malformed JSON response ----------------------------------
 
@@ -361,55 +344,51 @@ class TestLemonSqueezyErrors(unittest.TestCase):
 
     # --- 5a. Auth failure (401) ---------------------------------------------
 
-    @unittest.expectedFailure
     def test_lemon_squeezy_auth_failure_handled(self):
         """
         Auth failure (401): urllib raises HTTPError(401).
-        ls_get() has NO try/except; raw HTTPError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        ls_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_http_error(401, "Unauthorized")):
-            result = northstar.fetch_lemon_squeezy_metrics("bad_key", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_lemon_squeezy_metrics("bad_key", 10000.0)
+            self.assertIn("Lemon Squeezy request failed", str(ctx.exception))
 
     # --- 5b. Rate limit (429) -----------------------------------------------
 
-    @unittest.expectedFailure
     def test_lemon_squeezy_rate_limit_handled(self):
         """
         Rate limit (429): urllib raises HTTPError(429).
-        ls_get() has NO try/except; raw HTTPError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        ls_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_http_error(429, "Too Many Requests")):
-            result = northstar.fetch_lemon_squeezy_metrics("key", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_lemon_squeezy_metrics("key", 10000.0)
+            self.assertIn("Lemon Squeezy request failed", str(ctx.exception))
 
     # --- 5c. Server error (500) ---------------------------------------------
 
-    @unittest.expectedFailure
     def test_lemon_squeezy_server_error_handled(self):
         """
         Server error (500): urllib raises HTTPError(500).
-        ls_get() has NO try/except; raw HTTPError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        ls_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_http_error(500, "Internal Server Error")):
-            result = northstar.fetch_lemon_squeezy_metrics("key", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_lemon_squeezy_metrics("key", 10000.0)
+            self.assertIn("Lemon Squeezy request failed", str(ctx.exception))
 
     # --- 5d. Timeout --------------------------------------------------------
 
-    @unittest.expectedFailure
     def test_lemon_squeezy_timeout_handled(self):
         """
         Network timeout: urllib raises URLError(socket.timeout).
-        ls_get() has NO try/except; raw URLError propagates uncaught.
-        Marked expectedFailure to document the gap.
+        ls_get() wraps all exceptions in RuntimeError with a clear message.
         """
         with patch("urllib.request.urlopen", side_effect=make_url_error_timeout()):
-            result = northstar.fetch_lemon_squeezy_metrics("key", 10000.0)
-            self.assertIsInstance(result, dict)
+            with self.assertRaises(RuntimeError) as ctx:
+                northstar.fetch_lemon_squeezy_metrics("key", 10000.0)
+            self.assertIn("Lemon Squeezy request failed", str(ctx.exception))
 
     # --- 5e. Empty orders list (no KeyError) --------------------------------
 
@@ -452,12 +431,12 @@ class TestLemonSqueezyErrors(unittest.TestCase):
 # ===========================================================================
 # Adapter          | 401/403 | 429  | 500  | Timeout | Empty Data
 # -----------------|---------|------|------|---------|------------
-# Stripe           | FAIL*   | FAIL*| FAIL*| FAIL*   | PASS
-# Shopify          | FAIL*   | FAIL*| FAIL*| FAIL*   | PASS
+# Stripe           | PASS    | PASS | PASS | PASS    | PASS
+# Shopify          | PASS    | PASS | PASS | PASS    | PASS
 # Gumroad          | PASS    | PASS | PASS | PASS    | PASS
-# Lemon Squeezy    | FAIL*   | FAIL*| FAIL*| FAIL*   | PASS
+# Lemon Squeezy    | PASS    | PASS | PASS | PASS    | PASS
 #
-# * = marked @unittest.expectedFailure (gap documented, not a bug in tests)
+# All adapters now raise RuntimeError with clear messages on API errors.
 # PASS = adapter handles gracefully, test verifies that behavior
 # ===========================================================================
 
