@@ -1,14 +1,18 @@
-# Northstar
+<p align="center">
+  <img src="docs/header.svg" alt="Northstar - Daily business briefings for founders running OpenClaw" width="800"/>
+</p>
 
-![CI](https://github.com/Daveglaser0823/northstar-skill/actions/workflows/ci.yml/badge.svg)
-![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <a href="https://github.com/Daveglaser0823/northstar-skill/actions/workflows/ci.yml"><img src="https://github.com/Daveglaser0823/northstar-skill/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT">
+  <a href="https://clawhub.ai/Daveglaser0823/northstar"><img src="https://img.shields.io/badge/ClawHub-available-purple" alt="ClawHub"></a>
+</p>
 
-**Daily business briefing for founders running OpenClaw.**
-
-Wake up knowing. No tabs. No manual assembly. Your agent did the work while you slept.
-
-**Website:** https://daveglaser0823.github.io/northstar-skill/
+<p align="center">
+  <b>Wake up knowing. No tabs. No manual assembly. Your agent did the work while you slept.</b><br>
+  <a href="https://daveglaser0823.github.io/northstar-skill/">Website</a> · <a href="INSTALL.md">Install Guide</a> · <a href="https://github.com/Daveglaser0823/northstar-skill/issues/new/choose">Get a License</a>
+</p>
 
 ---
 
@@ -24,17 +28,9 @@ Your dashboards show you data. They don't surface what needs your attention.
 
 Northstar is an OpenClaw skill that pulls your key business metrics each morning and delivers a clean briefing via iMessage, Slack, Telegram, or Email. It highlights anomalies, flags payment failures, and tells you whether you're on pace -- before you open a single tab.
 
-```
-📊 Northstar Daily Briefing - March 22
-Revenue yesterday: $1,247 (+12% vs last week)
-Active subscribers: 342 (+3 new, -1 churn)
-Month-to-date: $18,430 (74% of $24,900 goal)
-
-Shopify: 23 orders fulfilled | 8 open | 1 refund ($47)
-
-⚠️ 2 payment retries pending - review in Stripe
-Next: 6 days left in month, on track.
-```
+<p align="center">
+  <img src="docs/demo.svg" alt="Northstar demo output" width="620"/>
+</p>
 
 ## Install
 

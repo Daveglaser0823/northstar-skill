@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="200" viewBox="0 0 800 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#818cf8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="200" rx="12" fill="url(#bg)"/>
+  <text x="400" y="75" text-anchor="middle" fill="url(#accent)" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700">&#x2B50; Northstar</text>
+  <text x="400" y="115" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="20">Daily business briefings for founders running OpenClaw</text>
+  <text x="400" y="155" text-anchor="middle" fill="#64748b" font-family="system-ui, -apple-system, sans-serif" font-size="14">Stripe &#x2022; Shopify &#x2022; Lemon Squeezy &#x2022; Gumroad &#x2192; iMessage / Slack / Telegram / Email</text>
+</svg>
