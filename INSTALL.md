@@ -371,21 +371,9 @@ Northstar is available in three tiers:
 | **Standard** | $19/month | Stripe + Shopify, all delivery channels, scheduled runs |
 | **Pro** | $49/month | Everything in Standard plus weekly digest, 7-day sparkline, multi-channel, custom metrics |
 
-**To subscribe:** Open a GitHub issue to request a license key: [Standard ($19/month)](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard) or [Pro ($49/month)](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Pro). You receive a license key within 24 hours. Activate with `northstar activate <key>`. You can also set the tier manually by editing your config:
+**To subscribe:** Open a GitHub issue to request a license key: [Standard ($19/month)](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Standard) or [Pro ($49/month)](https://github.com/Daveglaser0823/northstar-skill/issues/new?title=License+Request:+Pro). You receive a license key within 24 hours.
 
-```json
-{
-  "tier": "standard"
-}
-```
-
-Or for Pro:
-
-```json
-{
-  "tier": "pro"
-}
-```
+Activate with: `northstar activate YOUR-KEY`
 
 The free Lite tier is always available -- no config required, just `northstar demo` or `northstar test` with a Stripe key.
 

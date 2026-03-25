@@ -14,9 +14,10 @@ import argparse
 import subprocess
 import hmac
 import hashlib
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 # Version (single source of truth in version.py)
 _scripts_dir = str(Path(__file__).parent)
@@ -101,6 +102,31 @@ def verify_license_token(config: dict) -> bool:
     # Full verification: constant-time comparison to prevent timing attacks.
     expected = sign_license_token(key, tier)
     return hmac.compare_digest(token, expected)
+
+
+def require_paid_tier(config: dict, feature_name: str) -> bool:
+    """
+    Return True if the user has a valid Standard or Pro license token.
+
+    Standard-tier features (Shopify, Lemon Squeezy, Gumroad) require a paid
+    subscription backed by an HMAC-signed token.  Editing ``config["tier"]``
+    manually does NOT grant access because the license_token will not match
+    without the server-side secret.
+
+    If the check fails, prints a human-readable upgrade message to stdout and
+    returns False.  Callers should skip the gated operation when False is
+    returned (no sys.exit -- we degrade gracefully).
+    """
+    tier = config.get("tier", "free")
+    if tier in ("standard", "pro") and verify_license_token(config):
+        return True
+
+    print(
+        f"\n  {feature_name} requires a Northstar Standard or Pro license ($19/month).\n"
+        f"  Upgrade at: https://clawhub.ai/Daveglaser0823/northstar\n"
+        f"  Activate with: northstar activate YOUR-KEY\n"
+    )
+    return False
 
 
 # ---- Config ----------------------------------------------------------------
@@ -828,6 +854,480 @@ def deliver(message: str, config: dict, dry_run: bool = False) -> bool:
 
 # ---- Commands --------------------------------------------------------------
 
+# ---- Doctor ----------------------------------------------------------------
+
+@dataclass
+class DiagnosticCheck:
+    """Result of a single environment check."""
+    name: str
+    status: str  # "PASS", "WARN", "FAIL"
+    message: str
+    fix: Optional[str] = None
+
+
+@dataclass
+class DiagnosticReport:
+    """Aggregate of all diagnostic checks."""
+    checks: List[DiagnosticCheck] = field(default_factory=list)
+
+    @property
+    def summary(self) -> dict:
+        passed = sum(1 for c in self.checks if c.status == "PASS")
+        warned = sum(1 for c in self.checks if c.status == "WARN")
+        failed = sum(1 for c in self.checks if c.status == "FAIL")
+        return {"passed": passed, "warned": warned, "failed": failed}
+
+
+def _mask_secret(value: str) -> str:
+    """Mask a secret: show first 7 chars + '***'. Short keys show first 2 chars."""
+    if not value:
+        return "(empty)"
+    if len(value) <= 7:
+        return value[:2] + "***"
+    return value[:7] + "***"
+
+
+def _check_python_version() -> DiagnosticCheck:
+    """Check Python version: PASS >= 3.10, WARN 3.9, FAIL < 3.9."""
+    vi = sys.version_info
+    # Use index access so this works with both sys.version_info namedtuple and plain tuples in tests
+    version_str = f"{vi[0]}.{vi[1]}.{vi[2]}"
+    if vi >= (3, 10):
+        return DiagnosticCheck(
+            name="Python version",
+            status="PASS",
+            message=f"Python {version_str}",
+        )
+    elif vi >= (3, 9):
+        return DiagnosticCheck(
+            name="Python version",
+            status="WARN",
+            message=f"Python {version_str} (3.10+ recommended)",
+            fix="Upgrade: https://python.org/downloads/",
+        )
+    else:
+        return DiagnosticCheck(
+            name="Python version",
+            status="FAIL",
+            message=f"Python {version_str} - too old (requires 3.9+)",
+            fix="Upgrade to Python 3.10+: https://python.org/downloads/",
+        )
+
+
+def _check_dependencies() -> DiagnosticCheck:
+    """Check all required imports are available."""
+    required = ["requests", "json", "hmac", "hashlib", "pathlib"]
+    missing = []
+    for mod in required:
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(mod)
+    if missing:
+        return DiagnosticCheck(
+            name="Dependencies",
+            status="FAIL",
+            message=f"Missing packages: {', '.join(missing)}",
+            fix=f"Install: pip3 install --user --break-system-packages {' '.join(missing)}",
+        )
+    return DiagnosticCheck(
+        name="Dependencies",
+        status="PASS",
+        message="All dependencies installed",
+    )
+
+
+def _check_config_file(config_path: Optional[Path] = None) -> tuple:
+    """
+    Check config file exists and is valid JSON.
+    Returns (DiagnosticCheck, config_dict_or_None).
+    """
+    path = config_path or CONFIG_PATH
+    display_path = str(path).replace(str(Path.home()), "~")
+
+    if not path.exists():
+        return DiagnosticCheck(
+            name="Config file",
+            status="FAIL",
+            message=f"Config not found ({display_path})",
+            fix="Run: northstar setup",
+        ), None
+
+    try:
+        with open(path) as f:
+            config = json.load(f)
+        return DiagnosticCheck(
+            name="Config file",
+            status="PASS",
+            message=f"Config file ({display_path})",
+        ), config
+    except json.JSONDecodeError as e:
+        return DiagnosticCheck(
+            name="Config file",
+            status="FAIL",
+            message=f"Config file invalid JSON: {e}",
+            fix="Run: northstar setup  (or fix JSON manually)",
+        ), None
+
+
+def _check_stripe_key(config: Optional[dict], offline: bool = False) -> DiagnosticCheck:
+    """Check Stripe API key format and optionally connectivity."""
+    if not config:
+        return DiagnosticCheck(
+            name="Stripe API key",
+            status="WARN",
+            message="Cannot check (no config loaded)",
+            fix="Run: northstar setup",
+        )
+
+    stripe_cfg = config.get("stripe", {})
+    if not stripe_cfg.get("enabled", False):
+        return DiagnosticCheck(
+            name="Stripe API key",
+            status="WARN",
+            message="Stripe not enabled in config",
+            fix="Run: northstar setup",
+        )
+
+    key = stripe_cfg.get("api_key", "")
+
+    if not key or key.startswith("sk_live_YOUR") or key.startswith("sk_test_YOUR"):
+        return DiagnosticCheck(
+            name="Stripe API key",
+            status="WARN",
+            message="Stripe API key not configured",
+            fix="Run: northstar setup",
+        )
+
+    # Validate format
+    if not (key.startswith("sk_live_") or key.startswith("sk_test_") or key.startswith("rk_live_") or key.startswith("rk_test_")):
+        return DiagnosticCheck(
+            name="Stripe API key",
+            status="FAIL",
+            message=f"Stripe API key malformed ({_mask_secret(key)})",
+            fix="Key must start with sk_live_*, sk_test_*, rk_live_*, or rk_test_*",
+        )
+
+    masked = _mask_secret(key)
+
+    if offline:
+        return DiagnosticCheck(
+            name="Stripe API key",
+            status="PASS",
+            message=f"Stripe API key format valid ({masked}) [offline - not verified]",
+        )
+
+    # Network check: GET /v1/balance (lightweight)
+    import urllib.request
+    import urllib.error
+
+    for attempt in range(2):
+        try:
+            req = urllib.request.Request(
+                "https://api.stripe.com/v1/balance",
+                headers={"Authorization": f"Bearer {key}"},
+            )
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                resp.read()
+            return DiagnosticCheck(
+                name="Stripe API key",
+                status="PASS",
+                message=f"Stripe API key valid ({masked})",
+            )
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                return DiagnosticCheck(
+                    name="Stripe API key",
+                    status="FAIL",
+                    message=f"Stripe API key rejected (401) ({masked})",
+                    fix="Check your key in Stripe Dashboard → Developers → API keys",
+                )
+            # Other HTTP errors (e.g., 403 restricted) - key exists but may be restricted
+            return DiagnosticCheck(
+                name="Stripe API key",
+                status="PASS",
+                message=f"Stripe API key accepted ({masked})",
+            )
+        except Exception:
+            if attempt == 0:
+                continue  # retry once
+            return DiagnosticCheck(
+                name="Stripe API key",
+                status="WARN",
+                message=f"Stripe API key format valid ({masked}) - network check failed",
+                fix="Check internet connectivity or run: northstar doctor --offline",
+            )
+
+    # Should not reach here
+    return DiagnosticCheck(
+        name="Stripe API key",
+        status="WARN",
+        message=f"Stripe API key ({masked}) - could not verify",
+    )
+
+
+def _check_shopify_config(config: Optional[dict]) -> DiagnosticCheck:
+    """Check Shopify config if tier >= standard."""
+    if not config:
+        return DiagnosticCheck(
+            name="Shopify config",
+            status="WARN",
+            message="Cannot check (no config loaded)",
+        )
+
+    tier = config.get("tier", "lite")
+    # Only relevant for standard/pro
+    if tier not in ("standard", "pro"):
+        return DiagnosticCheck(
+            name="Shopify config",
+            status="PASS",
+            message=f"Shopify not required for {tier} tier",
+        )
+
+    shopify_cfg = config.get("shopify", {})
+    if not shopify_cfg.get("enabled", False):
+        return DiagnosticCheck(
+            name="Shopify config",
+            status="WARN",
+            message="Shopify not enabled (optional for standard/pro)",
+            fix="Run: northstar setup  (to enable Shopify)",
+        )
+
+    shop_url = shopify_cfg.get("shop_domain", "")
+    access_token = shopify_cfg.get("access_token", "")
+
+    missing = []
+    if not shop_url or shop_url.startswith("your-"):
+        missing.append("shop_domain")
+    if not access_token or access_token.startswith("shpat_YOUR"):
+        missing.append("access_token")
+
+    if missing:
+        return DiagnosticCheck(
+            name="Shopify config",
+            status="WARN",
+            message=f"Shopify missing: {', '.join(missing)}",
+            fix="Run: northstar setup",
+        )
+
+    return DiagnosticCheck(
+        name="Shopify config",
+        status="PASS",
+        message=f"Shopify configured ({shop_url})",
+    )
+
+
+def _check_license_key(config: Optional[dict]) -> DiagnosticCheck:
+    """Check license key: PASS if valid HMAC, WARN if missing, FAIL if present but invalid."""
+    if not config:
+        return DiagnosticCheck(
+            name="License key",
+            status="WARN",
+            message="Cannot check (no config loaded)",
+        )
+
+    tier = config.get("tier", "lite")
+    key = config.get("license_key", "")
+
+    if tier == "lite" or not key:
+        return DiagnosticCheck(
+            name="License key",
+            status="WARN",
+            message="No license key (free/lite tier)",
+            fix="Purchase at: https://polar.sh/daveglaser0823/northstar-standard",
+        )
+
+    masked = _mask_secret(key)
+
+    # Validate HMAC token
+    if verify_license_token(config):
+        return DiagnosticCheck(
+            name="License key",
+            status="PASS",
+            message=f"License key valid ({tier.title()} tier) ({masked})",
+        )
+    else:
+        return DiagnosticCheck(
+            name="License key",
+            status="FAIL",
+            message=f"License key present but invalid ({masked})",
+            fix="Re-activate: northstar activate YOUR-KEY",
+        )
+
+
+def _check_delivery_channel(config: Optional[dict]) -> DiagnosticCheck:
+    """Check at least one delivery channel is configured."""
+    if not config:
+        return DiagnosticCheck(
+            name="Delivery channel",
+            status="WARN",
+            message="Cannot check (no config loaded)",
+            fix="Run: northstar setup",
+        )
+
+    delivery = config.get("delivery", {})
+    channel = delivery.get("channel", "none")
+
+    if channel == "none" or not channel:
+        return DiagnosticCheck(
+            name="Delivery channel",
+            status="WARN",
+            message="No delivery channel configured (output to terminal only)",
+            fix="Run: northstar setup\nOptions: imessage, slack, telegram, email",
+        )
+
+    # Validate channel-specific config
+    issues = []
+    if channel == "imessage":
+        recipient = delivery.get("recipient", "") or delivery.get("imessage_recipient", "")
+        if not recipient:
+            issues.append("iMessage recipient not set")
+    elif channel == "slack":
+        if not delivery.get("slack_webhook"):
+            issues.append("Slack webhook URL not set")
+    elif channel == "telegram":
+        if not delivery.get("telegram_bot_token"):
+            issues.append("Telegram bot token not set")
+        if not delivery.get("telegram_chat_id"):
+            issues.append("Telegram chat ID not set")
+    elif channel == "email":
+        if not delivery.get("email_to"):
+            issues.append("Email recipient not set")
+
+    if issues:
+        return DiagnosticCheck(
+            name="Delivery channel",
+            status="WARN",
+            message=f"Channel '{channel}' configured but incomplete: {', '.join(issues)}",
+            fix="Run: northstar setup",
+        )
+
+    return DiagnosticCheck(
+        name="Delivery channel",
+        status="PASS",
+        message=f"Delivery channel configured: {channel}",
+    )
+
+
+def _check_tier_consistency(config: Optional[dict]) -> DiagnosticCheck:
+    """Check tier matches license key prefix."""
+    if not config:
+        return DiagnosticCheck(
+            name="Plan tier consistency",
+            status="WARN",
+            message="Cannot check (no config loaded)",
+        )
+
+    tier = config.get("tier", "lite")
+    key = config.get("license_key", "")
+
+    # Free/lite tier with no key is consistent
+    if tier == "lite" and not key:
+        return DiagnosticCheck(
+            name="Plan tier consistency",
+            status="PASS",
+            message="Tier: lite (free)",
+        )
+
+    if not key:
+        # Tier set but no key
+        if tier in ("standard", "pro"):
+            return DiagnosticCheck(
+                name="Plan tier consistency",
+                status="FAIL",
+                message=f"Tier set to '{tier}' but no license key present",
+                fix="Run: northstar activate YOUR-KEY",
+            )
+        return DiagnosticCheck(
+            name="Plan tier consistency",
+            status="PASS",
+            message=f"Tier: {tier}",
+        )
+
+    key_upper = key.upper()
+    expected_tier = None
+    if key_upper.startswith("NSP-") or key_upper.startswith("NS-PRO-"):
+        expected_tier = "pro"
+    elif key_upper.startswith("NSS-") or key_upper.startswith("NS-STD-"):
+        expected_tier = "standard"
+
+    if expected_tier and expected_tier != tier:
+        return DiagnosticCheck(
+            name="Plan tier consistency",
+            status="FAIL",
+            message=f"Tier mismatch: config says '{tier}' but key prefix indicates '{expected_tier}'",
+            fix=f"Run: northstar activate YOUR-KEY  (to reset to {expected_tier})",
+        )
+
+    return DiagnosticCheck(
+        name="Plan tier consistency",
+        status="PASS",
+        message=f"Tier consistent: {tier}",
+    )
+
+
+def _print_doctor_report(report: DiagnosticReport) -> None:
+    """Print the doctor report in the standard format."""
+    print()
+    print("Northstar Doctor - Environment Check")
+    print("=====================================")
+
+    for check in report.checks:
+        status_label = f"[{check.status}]"
+        print(f"{status_label} {check.message}")
+        if check.fix:
+            # Indent fix lines
+            for line in check.fix.split("\n"):
+                print(f"       \u2192 {line}")
+
+    summary = report.summary
+    print()
+    print(
+        f"Result: {summary['passed']} passed, "
+        f"{summary['warned']} warnings, "
+        f"{summary['failed']} failures"
+    )
+    print()
+
+
+def cmd_doctor(config_path: Optional[Path] = None, offline: bool = False) -> int:
+    """
+    Run environment verification checks and print a PASS/WARN/FAIL report.
+    Returns exit code: 0 = all passed/warned, 1 = any failures.
+    """
+    report = DiagnosticReport()
+
+    # 1. Python version
+    report.checks.append(_check_python_version())
+
+    # 2. Dependencies
+    report.checks.append(_check_dependencies())
+
+    # 3. Config file
+    config_check, config = _check_config_file(config_path)
+    report.checks.append(config_check)
+
+    # 4. Stripe API key
+    report.checks.append(_check_stripe_key(config, offline=offline))
+
+    # 5. Shopify config (tier >= standard)
+    report.checks.append(_check_shopify_config(config))
+
+    # 6. License key
+    report.checks.append(_check_license_key(config))
+
+    # 7. Delivery channel
+    report.checks.append(_check_delivery_channel(config))
+
+    # 8. Plan tier consistency
+    report.checks.append(_check_tier_consistency(config))
+
+    _print_doctor_report(report)
+
+    summary = report.summary
+    return 1 if summary["failed"] > 0 else 0
+
+
 def cmd_run(config: dict, dry_run: bool = False):
     """Run the briefing."""
     stripe_data = None
@@ -849,38 +1349,47 @@ def cmd_run(config: dict, dry_run: bool = False):
             stripe_data = fetch_stripe_metrics(api_key, float(goal), currency)
             print("OK")
 
-    # Fetch Lemon Squeezy
+    # Fetch Lemon Squeezy (Standard/Pro only)
     if config.get("lemonsqueezy", {}).get("enabled"):
-        ls_key = config["lemonsqueezy"].get("api_key", "")
-        if not ls_key or ls_key.startswith("YOUR_"):
-            print("  Lemon Squeezy: SKIP (no API key configured)")
+        if not require_paid_tier(config, "Lemon Squeezy"):
+            print("  Lemon Squeezy: SKIP (upgrade required)")
         else:
-            print("  Fetching Lemon Squeezy data...", end=" ", flush=True)
-            ls_goal = config["lemonsqueezy"].get("monthly_revenue_goal", 0)
-            lemonsqueezy_data = fetch_lemon_squeezy_metrics(ls_key, float(ls_goal))
-            print("OK")
+            ls_key = config["lemonsqueezy"].get("api_key", "")
+            if not ls_key or ls_key.startswith("YOUR_"):
+                print("  Lemon Squeezy: SKIP (no API key configured)")
+            else:
+                print("  Fetching Lemon Squeezy data...", end=" ", flush=True)
+                ls_goal = config["lemonsqueezy"].get("monthly_revenue_goal", 0)
+                lemonsqueezy_data = fetch_lemon_squeezy_metrics(ls_key, float(ls_goal))
+                print("OK")
 
-    # Fetch Gumroad
+    # Fetch Gumroad (Standard/Pro only)
     if config.get("gumroad", {}).get("enabled"):
-        gr_token = config["gumroad"].get("access_token", "")
-        if not gr_token or gr_token.startswith("YOUR_"):
-            print("  Gumroad: SKIP (no access token configured)")
+        if not require_paid_tier(config, "Gumroad"):
+            print("  Gumroad: SKIP (upgrade required)")
         else:
-            print("  Fetching Gumroad data...", end=" ", flush=True)
-            gr_goal = config["gumroad"].get("monthly_revenue_goal", 0)
-            gumroad_data = fetch_gumroad_metrics(gr_token, float(gr_goal))
-            print("OK")
+            gr_token = config["gumroad"].get("access_token", "")
+            if not gr_token or gr_token.startswith("YOUR_"):
+                print("  Gumroad: SKIP (no access token configured)")
+            else:
+                print("  Fetching Gumroad data...", end=" ", flush=True)
+                gr_goal = config["gumroad"].get("monthly_revenue_goal", 0)
+                gumroad_data = fetch_gumroad_metrics(gr_token, float(gr_goal))
+                print("OK")
 
-    # Fetch Shopify
+    # Fetch Shopify (Standard/Pro only)
     if config.get("shopify", {}).get("enabled"):
-        domain = config["shopify"].get("shop_domain", "")
-        token = config["shopify"].get("access_token", "")
-        if not domain or not token or token.startswith("shpat_YOUR"):
-            print("  Shopify: SKIP (not configured)")
+        if not require_paid_tier(config, "Shopify"):
+            print("  Shopify: SKIP (upgrade required)")
         else:
-            print("  Fetching Shopify data...", end=" ", flush=True)
-            shopify_data = fetch_shopify_metrics(domain, token)
-            print("OK")
+            domain = config["shopify"].get("shop_domain", "")
+            token = config["shopify"].get("access_token", "")
+            if not domain or not token or token.startswith("shpat_YOUR"):
+                print("  Shopify: SKIP (not configured)")
+            else:
+                print("  Fetching Shopify data...", end=" ", flush=True)
+                shopify_data = fetch_shopify_metrics(domain, token)
+                print("OK")
 
     if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data:
         print("\n  No data sources configured.")
@@ -1692,6 +2201,7 @@ Commands:
   setup     Interactive setup wizard - configure without editing JSON
   activate  Activate Standard or Pro tier with a license key
   upgrade   Show upgrade options and what each tier unlocks
+  doctor    Verify your entire setup - shows PASS/WARN/FAIL checklist
   run       Run briefing and deliver to configured channel
   test      Dry-run - print briefing to terminal only
   status    Show config and last run info
@@ -1706,6 +2216,8 @@ Examples:
   northstar setup                         # Configure interactively
   northstar activate NS-STD-XXXX-XXXX     # Activate after purchase
   northstar upgrade                       # See what higher tiers offer
+  northstar doctor                        # Verify your setup end-to-end
+  northstar doctor --offline              # Skip network checks
   northstar run
   northstar test
   northstar status
@@ -1715,12 +2227,14 @@ Examples:
         """
     )
     parser.add_argument("command", nargs="?", default="run",
-                        choices=["run", "test", "status", "stripe", "shopify", "report", "digest", "trend", "demo", "setup", "activate", "upgrade"],
+                        choices=["run", "test", "status", "stripe", "shopify", "report", "digest", "trend", "demo", "setup", "activate", "upgrade", "doctor"],
                         help="Command to run (default: run)")
     parser.add_argument("license_key", nargs="?", default=None,
                         help="License key for 'activate' command")
     parser.add_argument("--config", type=Path, default=None,
                         help="Path to config file (default: ~/.clawd/skills/northstar/config/northstar.json)")
+    parser.add_argument("--offline", action="store_true", default=False,
+                        help="Skip all network checks (for 'doctor' command)")
     parser.add_argument("--version", action="version", version=f"Northstar {__version__}")
 
     args = parser.parse_args()
@@ -1744,6 +2258,11 @@ Examples:
         except FileNotFoundError:
             config = {}
         cmd_upgrade(config)
+        return
+
+    if args.command == "doctor":
+        exit_code = cmd_doctor(config_path=args.config, offline=args.offline)
+        sys.exit(exit_code)
         return
 
     # Load config

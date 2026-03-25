@@ -38,6 +38,7 @@ Northstar is an OpenClaw skill that pulls your key business metrics each morning
 clawhub install northstar
 northstar demo             # See a sample briefing - no config needed
 northstar setup            # Configure interactively - no JSON editing required
+northstar doctor           # Verify your entire setup (PASS/WARN/FAIL checklist)
 ```
 
 **Estimated setup time: 4-5 minutes.**

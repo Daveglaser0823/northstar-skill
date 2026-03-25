@@ -363,24 +363,47 @@ class TestUpgradeDisplay(unittest.TestCase):
 
 # ── 7. TestDataSourceGating ─────────────────────────────────────────────────
 
+_FAKE_STRIPE = {
+    "revenue_yesterday": 100.0,
+    "revenue_last_week_same_day": 90.0,
+    "wow_change_pct": 11.0,
+    "revenue_mtd": 2000.0,
+    "goal_dollars": 10000.0,
+    "goal_pct": 20.0,
+    "days_remaining": 7,
+    "days_in_month": 31,
+    "on_track": False,
+    "projected_month": 8000.0,
+    "active_subs": 20,
+    "new_subs": 0,
+    "churned_subs": 0,
+    "payment_failures": 0,
+    "retries_pending": 0,
+    "mrr": 500.0,
+}
+
+_FAKE_SHOPIFY = {
+    "orders_total": 5,
+    "orders_fulfilled": 4,
+    "orders_open": 1,
+    "refunds_count": 0,
+    "refund_total": 0.0,
+    "top_product": "Widget",
+    "top_product_units": 4,
+}
+
+
 class TestDataSourceGating(unittest.TestCase):
     """
-    Data source gating behavior verification.
-
-    NOTE: Data source gating is NOT currently implemented per tier.
-    Lite tier allows all configured data sources (Stripe, Shopify, etc.).
-    These tests document current behavior so we know if it changes.
+    Standard-tier adapter gating: Shopify, Lemon Squeezy, and Gumroad require
+    a valid Standard or Pro HMAC token.  Free/Lite users are blocked gracefully
+    (no sys.exit; skipped with upgrade message).
     """
 
-    def test_lite_can_fetch_all_configured_sources(self):
-        """
-        NOTE: data source gating is not currently implemented per tier -
-        Lite allows all configured sources.
+    # ── Test 1: Free user + Shopify enabled → Shopify is SKIPPED ──────────
 
-        Lite + Shopify config: cmd_run DOES attempt shopify fetch (no gating).
-        We verify that fetch_shopify_metrics is called for a lite config that
-        has shopify configured -- confirming the current ungated behavior.
-        """
+    def test_free_user_shopify_skipped_with_upgrade_message(self):
+        """Free/Lite user with shopify enabled: fetch is skipped, upgrade message printed."""
         config = make_config(tier="lite", shopify_enabled=True)
 
         with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
@@ -389,47 +412,131 @@ class TestDataSourceGating(unittest.TestCase):
              patch.object(northstar, "save_state"), \
              patch.object(northstar, "load_state", return_value={"runs": 0}):
 
-            mock_stripe.return_value = {
-                "revenue_yesterday": 100.0,
-                "revenue_last_week_same_day": 90.0,
-                "wow_change_pct": 11.0,
-                "revenue_mtd": 2000.0,
-                "goal_dollars": 10000.0,
-                "goal_pct": 20.0,
-                "days_remaining": 7,
-                "days_in_month": 31,
-                "on_track": False,
-                "projected_month": 8000.0,
-                "active_subs": 20,
-                "new_subs": 0,
-                "churned_subs": 0,
-                "payment_failures": 0,
-                "retries_pending": 0,
-                "mrr": 500.0,
-            }
-            mock_shopify.return_value = {
-                "orders_total": 5,
-                "orders_fulfilled": 4,
-                "orders_open": 1,
-                "refunds_count": 0,
-                "refund_total": 0.0,
-                "top_product": "Widget",
-                "top_product_units": 4,
-            }
+            mock_stripe.return_value = _FAKE_STRIPE
+            mock_deliver.return_value = True
+
+            buf = io.StringIO()
+            with patch("sys.stdout", buf):
+                northstar.cmd_run(config, dry_run=True)
+            output = buf.getvalue()
+
+        # Shopify fetch must NOT be called for free tier
+        mock_shopify.assert_not_called()
+        # Upgrade message must appear
+        self.assertIn("upgrade", output.lower())
+
+    # ── Test 2: Standard user + valid HMAC + Shopify → Shopify IS fetched ──
+
+    def test_standard_user_valid_token_shopify_fetched(self):
+        """Standard user with valid HMAC token: Shopify fetch proceeds normally."""
+        config = make_standard_config(shopify_enabled=True)
+
+        with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
+             patch.object(northstar, "fetch_shopify_metrics") as mock_shopify, \
+             patch.object(northstar, "deliver") as mock_deliver, \
+             patch.object(northstar, "save_state"), \
+             patch.object(northstar, "load_state", return_value={"runs": 0}):
+
+            mock_stripe.return_value = _FAKE_STRIPE
+            mock_shopify.return_value = _FAKE_SHOPIFY
             mock_deliver.return_value = True
 
             with patch("sys.stdout", io.StringIO()):
                 northstar.cmd_run(config, dry_run=True)
 
-        # Assert shopify was attempted -- no tier gating blocked it
+        # Shopify fetch MUST be called for a valid standard user
         mock_shopify.assert_called_once()
 
+    # ── Test 3: Free user + Lemon Squeezy enabled → skipped ───────────────
+
+    def test_free_user_lemonsqueezy_skipped_with_upgrade_message(self):
+        """Free/Lite user with lemon squeezy enabled: fetch is skipped, upgrade message shown."""
+        config = make_config(tier="lite")
+        config["lemonsqueezy"] = {
+            "enabled": True,
+            "api_key": "ls_live_test123",
+            "monthly_revenue_goal": 5000,
+        }
+
+        with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
+             patch.object(northstar, "fetch_lemon_squeezy_metrics") as mock_ls, \
+             patch.object(northstar, "deliver") as mock_deliver, \
+             patch.object(northstar, "save_state"), \
+             patch.object(northstar, "load_state", return_value={"runs": 0}):
+
+            mock_stripe.return_value = _FAKE_STRIPE
+            mock_deliver.return_value = True
+
+            buf = io.StringIO()
+            with patch("sys.stdout", buf):
+                northstar.cmd_run(config, dry_run=True)
+            output = buf.getvalue()
+
+        # Lemon Squeezy fetch must NOT be called for free tier
+        mock_ls.assert_not_called()
+        # Upgrade message must appear
+        self.assertIn("upgrade", output.lower())
+
+    # ── Test 4: Free user + Gumroad enabled → skipped ─────────────────────
+
+    def test_free_user_gumroad_skipped_with_upgrade_message(self):
+        """Free/Lite user with gumroad enabled: fetch is skipped, upgrade message shown."""
+        config = make_config(tier="lite")
+        config["gumroad"] = {
+            "enabled": True,
+            "access_token": "gumroad_test123",
+            "monthly_revenue_goal": 3000,
+        }
+
+        with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
+             patch.object(northstar, "fetch_gumroad_metrics") as mock_gr, \
+             patch.object(northstar, "deliver") as mock_deliver, \
+             patch.object(northstar, "save_state"), \
+             patch.object(northstar, "load_state", return_value={"runs": 0}):
+
+            mock_stripe.return_value = _FAKE_STRIPE
+            mock_deliver.return_value = True
+
+            buf = io.StringIO()
+            with patch("sys.stdout", buf):
+                northstar.cmd_run(config, dry_run=True)
+            output = buf.getvalue()
+
+        # Gumroad fetch must NOT be called for free tier
+        mock_gr.assert_not_called()
+        self.assertIn("upgrade", output.lower())
+
+    # ── Test 5: Spoofed standard tier (no token) → still blocked ──────────
+
+    def test_spoofed_standard_tier_no_token_shopify_blocked(self):
+        """
+        User who manually sets tier=standard in config WITHOUT a valid token
+        should still be blocked -- HMAC check prevents bypass.
+        """
+        config = make_config(tier="standard", shopify_enabled=True)
+        # No license_key or license_token -- HMAC check will fail
+
+        with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
+             patch.object(northstar, "fetch_shopify_metrics") as mock_shopify, \
+             patch.object(northstar, "deliver") as mock_deliver, \
+             patch.object(northstar, "save_state"), \
+             patch.object(northstar, "load_state", return_value={"runs": 0}):
+
+            mock_stripe.return_value = _FAKE_STRIPE
+            mock_deliver.return_value = True
+
+            buf = io.StringIO()
+            with patch("sys.stdout", buf):
+                northstar.cmd_run(config, dry_run=True)
+            output = buf.getvalue()
+
+        mock_shopify.assert_not_called()
+        self.assertIn("upgrade", output.lower())
+
+    # ── Test 6: Stripe is still available to all tiers ────────────────────
+
     def test_lite_can_fetch_stripe_without_gating(self):
-        """
-        NOTE: Stripe fetch is also ungated by tier.
-        Lite tier fetches Stripe just like Standard/Pro.
-        Documents current behavior - no tier check before data source fetch.
-        """
+        """Stripe is available to all tiers including Lite -- no gating."""
         config = make_config(tier="lite")
 
         with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
@@ -437,31 +544,65 @@ class TestDataSourceGating(unittest.TestCase):
              patch.object(northstar, "save_state"), \
              patch.object(northstar, "load_state", return_value={"runs": 0}):
 
-            mock_stripe.return_value = {
-                "revenue_yesterday": 50.0,
-                "revenue_last_week_same_day": 40.0,
-                "wow_change_pct": 25.0,
-                "revenue_mtd": 1000.0,
-                "goal_dollars": 10000.0,
-                "goal_pct": 10.0,
-                "days_remaining": 10,
-                "days_in_month": 31,
-                "on_track": False,
-                "projected_month": 3000.0,
-                "active_subs": 10,
-                "new_subs": 0,
-                "churned_subs": 0,
-                "payment_failures": 0,
-                "retries_pending": 0,
-                "mrr": 300.0,
-            }
+            mock_stripe.return_value = _FAKE_STRIPE
             mock_deliver.return_value = True
 
             with patch("sys.stdout", io.StringIO()):
                 northstar.cmd_run(config, dry_run=True)
 
-        # Stripe fetch was NOT gated by tier
         mock_stripe.assert_called_once()
+
+    # ── Test 7: Pro user can also access Shopify ──────────────────────────
+
+    def test_pro_user_shopify_fetched(self):
+        """Pro tier (which includes Standard features) can access Shopify."""
+        config = make_pro_config(shopify_enabled=True)
+
+        with patch.object(northstar, "fetch_stripe_metrics") as mock_stripe, \
+             patch.object(northstar, "fetch_shopify_metrics") as mock_shopify, \
+             patch.object(northstar, "deliver") as mock_deliver, \
+             patch.object(northstar, "save_state"), \
+             patch.object(northstar, "load_state", return_value={"runs": 0}):
+
+            mock_stripe.return_value = _FAKE_STRIPE
+            mock_shopify.return_value = _FAKE_SHOPIFY
+            mock_deliver.return_value = True
+
+            with patch("sys.stdout", io.StringIO()):
+                northstar.cmd_run(config, dry_run=True)
+
+        mock_shopify.assert_called_once()
+
+    # ── Test 8: require_paid_tier helper unit tests ────────────────────────
+
+    def test_require_paid_tier_returns_false_for_free(self):
+        """require_paid_tier returns False for free/lite tier."""
+        config = make_config(tier="lite")
+        with patch("sys.stdout", io.StringIO()):
+            result = northstar.require_paid_tier(config, "TestFeature")
+        self.assertFalse(result)
+
+    def test_require_paid_tier_returns_true_for_standard_with_token(self):
+        """require_paid_tier returns True for valid standard tier."""
+        config = make_standard_config()
+        result = northstar.require_paid_tier(config, "TestFeature")
+        self.assertTrue(result)
+
+    def test_require_paid_tier_returns_true_for_pro_with_token(self):
+        """require_paid_tier returns True for valid pro tier."""
+        config = make_pro_config()
+        result = northstar.require_paid_tier(config, "TestFeature")
+        self.assertTrue(result)
+
+    def test_require_paid_tier_prints_upgrade_message_for_free(self):
+        """require_paid_tier prints upgrade message when tier is insufficient."""
+        config = make_config(tier="lite")
+        buf = io.StringIO()
+        with patch("sys.stdout", buf):
+            northstar.require_paid_tier(config, "Shopify")
+        output = buf.getvalue()
+        self.assertIn("Shopify", output)
+        self.assertIn("upgrade", output.lower())
 
 
 if __name__ == "__main__":
