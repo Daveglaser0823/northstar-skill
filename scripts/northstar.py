@@ -835,7 +835,7 @@ def cmd_run(config: dict, dry_run: bool = False):
     lemonsqueezy_data = None
     gumroad_data = None
 
-    print(f"Northstar v2.3.0 | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Northstar v{__version__} | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Fetch Stripe
     if config.get("stripe", {}).get("enabled"):
