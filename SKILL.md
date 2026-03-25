@@ -29,45 +29,51 @@ Next: 6 days left in month, on track.
 
 ## Quick Start
 
-### 1. Install the skill
+### 1. Install and try the demo
 
 ```bash
 clawhub install northstar
 northstar demo    # See a sample briefing immediately - no config needed
 ```
 
-### 2. Configure your credentials
-
-Copy the config template and fill in your keys:
+### 2. Set up (interactive wizard, ~4 minutes)
 
 ```bash
-cp ~/.clawd/skills/northstar/config/northstar.json.example ~/.clawd/skills/northstar/config/northstar.json
+northstar setup
 ```
 
-Edit `northstar.json` with your API keys. See **Configuration** section below.
+The setup wizard walks you through everything: tier selection, API keys, delivery channel, and schedule. No JSON editing required.
 
-### 3. Test it
+### 3. Test with your real data
 
 ```bash
 northstar test
 ```
 
-Runs a dry-run briefing and prints output to your terminal. No message is sent.
+Dry-run briefing printed to terminal. No message sent until you're ready.
 
-### 4. Schedule it
+### 4. Go live
 
-Add to your OpenClaw cron (edit via `openclaw cron edit`):
+```bash
+northstar run    # Send briefing now
+```
+
+Or schedule it (add to OpenClaw cron via `openclaw cron edit`):
 
 ```
 # Northstar daily briefing at 6:00 AM
 0 6 * * * northstar run
 ```
 
-Or trigger manually anytime:
+### Manual configuration (optional)
+
+If you prefer editing config directly instead of using the setup wizard:
 
 ```bash
-northstar run
+cp ~/.clawd/skills/northstar/config/northstar.json.example ~/.clawd/skills/northstar/config/northstar.json
 ```
+
+Edit `northstar.json` with your API keys. See **Configuration** section below.
 
 ## Configuration
 
