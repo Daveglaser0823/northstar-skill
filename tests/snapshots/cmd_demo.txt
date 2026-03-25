@@ -1,0 +1,25 @@
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Northstar Demo - Sample Briefing
+  (no API keys required)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Northstar Daily Briefing - <DATE>
+Revenue yesterday: $1,248 (+12% vs last week)
+Active subscribers: 342 (+3 new, -1 churn)
+Month-to-date: $18,430 (74% of $24,900 goal)
+Shopify: 23 orders fulfilled | 8 open | 1 refund ($47.00)
+Top product: Growth Plan - Annual (7 units)
+
+⚠️ 2 payment issues pending - review in Stripe
+Next: 6 days left in month, on track.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to see your real numbers?
+  1. Run:  northstar setup  (interactive wizard, ~3 minutes)
+  2. Run:  northstar test   (dry-run with your real data)
+  3. Run:  northstar run    (live delivery to iMessage / Slack / Telegram)
+
+Docs: https://github.com/Daveglaser0823/northstar-skill/blob/main/INSTALL.md
+

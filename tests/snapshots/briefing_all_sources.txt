@@ -1,0 +1,14 @@
+📊 Northstar Daily Briefing - <DATE>
+Revenue yesterday: $316.13 (+9% vs last week)
+Active subscribers: 48 (+3 new, -1 churn)
+Month-to-date: $9,800 (65% of $15,000 goal)
+Lemon Squeezy: $89.00 yesterday (+19% vs last week)
+LS subscribers: 12 (+1 new)
+LS month-to-date: $1,200 (40% of $3,000 goal)
+Gumroad: $145.00 yesterday (+21% vs last week) (8 sales)
+GR month-to-date: $2,100 (42% of $5,000 goal)
+Shopify: 42 orders fulfilled | 5 open | 2 refund ($89.50)
+Top product: Widget Pro (15 units)
+
+⚠️ 2 payment issues pending - review in Stripe
+Next: 7 days left in month, on track.

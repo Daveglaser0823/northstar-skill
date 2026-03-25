@@ -1,0 +1,7 @@
+📊 Northstar Daily Briefing - <DATE>
+Revenue yesterday: $316.13 (+9% vs last week)
+Active subscribers: 48 (+3 new, -1 churn)
+Month-to-date: $9,800 (65% of $15,000 goal)
+
+⚠️ 2 payment issues pending - review in Stripe
+Next: 7 days left in month, on track.
