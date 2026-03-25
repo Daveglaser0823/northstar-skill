@@ -74,7 +74,7 @@ Available on [ClawHub](https://clawhub.ai/Daveglaser0823/northstar).
 ## Subscribe (Standard or Pro)
 
 1. Open a [license request issue](https://github.com/Daveglaser0823/northstar-skill/issues/new/choose) with your email address
-2. Pay via **Venmo @Daveglaser-3** — include your tier and GitHub handle in the note
+2. Pay via **Venmo @Daveglaser-3** - include your tier and GitHub handle in the note
    - Standard: `$19 Northstar Standard - your-github-handle`
    - Pro: `$49 Northstar Pro - your-github-handle`
 3. You'll receive your license key by email within a few hours (usually faster)
