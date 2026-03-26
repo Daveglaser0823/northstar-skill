@@ -1710,7 +1710,7 @@ def cmd_trend(config: dict):
     pro.cmd_trend(config)
 
 
-def cmd_setup():
+def cmd_setup(config_path_override: str = None):
     """Interactive setup wizard. Walks through config without manual JSON editing."""
     import sys
 
@@ -2015,7 +2015,7 @@ def cmd_setup():
         config["custom_metrics"] = []
 
     # --- Write config ---
-    config_path = CONFIG_PATH
+    config_path = Path(config_path_override) if config_path_override else CONFIG_PATH
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
     if config_path.exists():
@@ -2260,7 +2260,7 @@ Examples:
         return
 
     if args.command == "setup":
-        cmd_setup()
+        cmd_setup(config_path_override=args.config)
         return
 
     if args.command == "activate":
