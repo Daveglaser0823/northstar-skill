@@ -193,14 +193,14 @@ class TestTierCheck(unittest.TestCase):
         # Server-side Polar.sh check (at activate time) is the true gating layer.
         self.assertTrue(result)  # HMAC valid -- Polar blocks this at activation
 
-    def test_legacy_pro_key_no_token_still_works(self):
-        """Legacy NSP- keys without a token are accepted (backward compatibility)."""
+    def test_legacy_pro_key_no_token_rejected(self):
+        """Keys without HMAC token are rejected (legacy bypass removed for security)."""
         legacy = {
             "tier": "pro",
             "license_key": "NSP-LEGC-YCKE-0001",
-            # no license_token -- activated before token signing existed
+            # no license_token -- must re-activate to get HMAC token
         }
-        self.assertTrue(pro.is_pro(legacy))
+        self.assertFalse(pro.is_pro(legacy))
 
     def test_legacy_standard_key_as_pro_rejected(self):
         """Legacy NSS- key with tier=pro (without token) is rejected."""

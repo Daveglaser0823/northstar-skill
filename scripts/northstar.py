@@ -86,17 +86,7 @@ def verify_license_token(config: dict) -> bool:
     key = config.get("license_key", "")
     token = config.get("license_token", "")
 
-    if not key:
-        return False
-
-    # Legacy activations (no token yet): accept NSP-/NSS- keys that match the tier.
-    # This preserves Ryan's existing activation without forcing a re-activate.
-    if not token:
-        key_upper = key.upper()
-        if tier == "pro" and (key_upper.startswith("NSP-") or key_upper.startswith("NS-PRO-")):
-            return True
-        if tier == "standard" and (key_upper.startswith("NSS-") or key_upper.startswith("NS-STD-")):
-            return True
+    if not key or not token:
         return False
 
     # Full verification: constant-time comparison to prevent timing attacks.
