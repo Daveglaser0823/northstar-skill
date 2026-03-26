@@ -2,7 +2,7 @@
   "_comment": "Northstar config. Copy to ~/.clawd/skills/northstar/config/northstar.json and fill in your keys.",
   "_tier": "Set to 'standard' ($19/month) or 'pro' ($49/month). Controls which features activate.",
 
-  "tier": "standard",
+  "tier": "lite",
 
   "delivery": {
     "_comment_channel": "Single channel for Standard. Pro: use 'channels' array (up to 3).",

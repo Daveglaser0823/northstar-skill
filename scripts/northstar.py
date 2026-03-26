@@ -1318,7 +1318,7 @@ def cmd_doctor(config_path: Optional[Path] = None, offline: bool = False) -> int
     return 1 if summary["failed"] > 0 else 0
 
 
-def cmd_run(config: dict, dry_run: bool = False):
+def cmd_run(config: dict, dry_run: bool = False, config_path: Path = None):
     """Run the briefing."""
     stripe_data = None
     shopify_data = None
@@ -1403,7 +1403,7 @@ def cmd_run(config: dict, dry_run: bool = False):
 
     if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data:
         print("\n  No data sources configured.")
-        print(f"  Config: {CONFIG_PATH}")
+        print(f"  Config: {config_path or CONFIG_PATH}")
         print()
         print("  Next step: run 'northstar setup' to configure your Stripe key and delivery channel.")
         print("  Or edit the config file directly and add your stripe_api_key.")
@@ -2287,9 +2287,9 @@ Examples:
 
     # Dispatch
     if args.command == "run":
-        cmd_run(config, dry_run=False)
+        cmd_run(config, dry_run=False, config_path=args.config)
     elif args.command == "test":
-        cmd_run(config, dry_run=True)
+        cmd_run(config, dry_run=True, config_path=args.config)
     elif args.command == "status":
         cmd_status(config)
     elif args.command == "stripe":
