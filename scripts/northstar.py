@@ -1124,7 +1124,7 @@ def _check_license_key(config: Optional[dict]) -> DiagnosticCheck:
             name="License key",
             status="WARN",
             message="No license key (free/lite tier)",
-            fix="Purchase at: https://polar.sh/daveglaser0823/northstar-standard",
+            fix="Get a license: email steve.glaser.ops@gmail.com with subject 'Northstar Standard'",
         )
 
     masked = _mask_secret(key)
@@ -1478,17 +1478,20 @@ def validate_polar_license(license_key: str, org_id: str) -> dict:
 
 def cmd_activate(license_key: str):
     """Activate Standard or Pro tier with a license key."""
-    POLAR_STANDARD_URL = "https://polar.sh/daveglaser0823/northstar-standard"
-    POLAR_PRO_URL = "https://polar.sh/daveglaser0823/northstar-pro"
+    LICENSE_EMAIL = "steve.glaser.ops@gmail.com"
+    LICENSE_ISSUE_URL = "https://github.com/Daveglaser0823/northstar-skill/issues/new/choose"
 
     if not license_key:
         print("Usage: northstar activate <license-key>")
         print()
-        print("Purchase a license:")
-        print(f"  Standard ($19/month): {POLAR_STANDARD_URL}")
-        print(f"  Pro ($49/month):       {POLAR_PRO_URL}")
+        print("Get a license:")
+        print(f"  Email {LICENSE_EMAIL} with subject 'Northstar [Standard/Pro]'")
+        print(f"  Or open a license request: {LICENSE_ISSUE_URL}")
         print()
-        print("After purchase, Polar emails you a license key automatically.")
+        print("  Standard: $19/month  |  Pro: $49/month")
+        print("  Payment via Venmo (@Daveglaser-3) or PayPal.")
+        print()
+        print("After payment, you'll receive a license key by email.")
         print("Then run: northstar activate YOUR-KEY-HERE")
         return
 
@@ -1547,7 +1550,7 @@ def cmd_activate(license_key: str):
         if not tier:
             print(f"Invalid license key format: {license_key}")
             print("Keys start with NSS- (Standard) or NSP- (Pro).")
-            print(f"Purchase at: {POLAR_STANDARD_URL}")
+            print(f"Get a license: email {LICENSE_EMAIL} with subject 'Northstar [Standard/Pro]'")
             sys.exit(1)
 
     # Load config and apply tier
@@ -2075,10 +2078,11 @@ def cmd_upgrade(config: dict):
         print("  ┣ northstar digest  -- weekly 7-day rollup")
         print("  ┗ northstar trend   -- sparkline revenue chart")
         print()
-        print("  Get Standard:  https://polar.sh/daveglaser0823/northstar-standard")
-        print("  Get Pro:       https://polar.sh/daveglaser0823/northstar-pro")
+        print("  Get a license: email steve.glaser.ops@gmail.com")
+        print("  Subject: 'Northstar [Standard/Pro] - [your GitHub handle]'")
+        print("  Payment via Venmo (@Daveglaser-3) or PayPal.")
         print()
-        print("  After purchase, Polar emails you a license key. Then run:")
+        print("  After payment, you'll receive a license key. Then run:")
         print("    northstar activate YOUR-KEY")
     elif tier == "standard":
         print("You're on Standard tier. ($19/month)")
@@ -2095,8 +2099,9 @@ def cmd_upgrade(config: dict):
         print("  ┣ northstar digest  -- weekly 7-day rollup")
         print("  ┗ northstar trend   -- sparkline revenue chart")
         print()
-        print("  Upgrade to Pro: https://polar.sh/daveglaser0823/northstar-pro")
-        print("  After purchase, activate your new key: northstar activate YOUR-PRO-KEY")
+        print("  Upgrade to Pro: email steve.glaser.ops@gmail.com")
+        print("  Subject: 'Northstar Pro Upgrade - [your GitHub handle]'")
+        print("  After payment, activate your new key: northstar activate YOUR-PRO-KEY")
     elif tier == "pro":
         print("You're on Pro tier. ($49/month)")
         print()
@@ -2118,7 +2123,7 @@ def cmd_report(config: dict):
     tier = config.get("tier", "lite")
     if tier not in ("pro",):
         print("northstar report requires Pro tier.")
-        print("Upgrade: https://polar.sh/daveglaser0823/northstar-pro")
+        print("Upgrade to Pro: email steve.glaser.ops@gmail.com")
         return
 
     now = datetime.now()

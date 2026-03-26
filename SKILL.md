@@ -197,7 +197,7 @@ To purchase Standard or Pro: open a [GitHub issue](https://github.com/Daveglaser
 
 Northstar runs entirely on your machine. Your Stripe and Shopify API keys are stored locally in `~/.clawd/skills/northstar/config/northstar.json` and are only used to call Stripe and Shopify directly from your local agent -- they are never sent to Northstar servers or third parties.
 
-**License activation:** If you activate a Standard or Pro license key, the `northstar activate` command makes a single outbound call to `api.polar.sh` to validate the key. No other data is transmitted. If Polar is not configured, validation is offline (key format only).
+**License activation:** If you activate a Standard or Pro license key, the `northstar activate` command validates the key locally using HMAC verification. No data is transmitted to external servers during activation.
 
 ## Support
 

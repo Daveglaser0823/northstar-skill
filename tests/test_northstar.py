@@ -336,7 +336,7 @@ class TestActivateCommand(unittest.TestCase):
             cmd_activate("")
         output = buf.getvalue()
         self.assertIn("Usage: northstar activate", output)
-        self.assertIn("polar.sh/daveglaser0823/northstar-standard", output)
+        self.assertIn("steve.glaser.ops@gmail.com", output)
 
     def test_activate_std_key_validates(self):
         """NS-STD- prefix correctly identified as standard tier."""
@@ -439,7 +439,7 @@ class TestActivateCommand(unittest.TestCase):
         self.assertIn("19", output)
         self.assertIn("Pro", output)
         self.assertIn("49", output)
-        self.assertIn("polar.sh", output)
+        self.assertIn("steve.glaser.ops@gmail.com", output)
 
     def test_upgrade_standard_shows_pro(self):
         """northstar upgrade shows Pro upgrade for Standard users."""
@@ -452,7 +452,7 @@ class TestActivateCommand(unittest.TestCase):
         output = buf.getvalue()
         self.assertIn("Pro", output)
         self.assertIn("49", output)
-        self.assertIn("polar.sh", output)
+        self.assertIn("steve.glaser.ops@gmail.com", output)
 
     def test_upgrade_pro_shows_no_upgrade(self):
         """northstar upgrade shows all-clear for Pro users."""
