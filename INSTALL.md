@@ -278,6 +278,7 @@ Use `northstar test` for on-demand terminal output.
 | `northstar shopify` | Show raw Shopify data (for debugging) |
 | `northstar digest` | [Pro] Run weekly digest (7-day rollup, Sunday format) |
 | `northstar trend` | [Pro] Show 7-day revenue trend with sparkline |
+| `northstar doctor` | Run full environment diagnostic (check config, keys, delivery, tier) |
 | `northstar --help` | Full help |
 
 ---
@@ -324,6 +325,14 @@ Northstar runs entirely on your machine. Your API keys are stored locally in `~/
 
 ## Troubleshooting
 
+**First thing to try:** Run the built-in diagnostic:
+```bash
+northstar doctor
+```
+This checks your Python version, dependencies, config file, API keys, license status, delivery channels, and tier consistency. It tells you exactly what's wrong and how to fix it.
+
+---
+
 **"Config not found" error:**
 ```bash
 ls ~/.clawd/skills/northstar/config/
@@ -337,7 +346,13 @@ If the file isn't there, run `clawhub install northstar` again.
 
 **Stripe shows no data:**
 - Check that your API key has the correct read permissions
-- Stripe Restricted Keys need explicit permissions - see Step 3
+- Stripe Restricted Keys need explicit permissions (see Step 3)
+- Run `northstar doctor` to verify your key is valid
+
+**Stripe API key error / "Invalid API Key provided":**
+- Make sure you're using a Restricted Key, not the publishable key (`pk_live_*`)
+- The key should start with `sk_live_` (or `sk_test_` for testing)
+- Create a new restricted key at [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys)
 
 **"northstar: command not found":**
 ```bash
@@ -349,6 +364,18 @@ macOS Homebrew Python blocks system-wide pip installs. Use:
 ```bash
 pip3 install --user --break-system-packages stripe
 ```
+
+**"Offline mode only" after activation:**
+- This means your license key was accepted but couldn't verify online
+- Check your internet connection
+- Run `northstar doctor` to see the full status
+- If the problem persists, open a GitHub issue with the doctor output
+
+**Adapter returns "FAILED" during briefing:**
+- The briefing shows which adapter failed and why
+- Common causes: expired API key, revoked permissions, rate limiting
+- Run `northstar doctor` for a detailed check of each adapter
+- Run `northstar stripe` or `northstar shopify` to see raw API responses
 
 ---
 
