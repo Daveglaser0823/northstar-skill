@@ -1346,8 +1346,13 @@ def cmd_run(config: dict, dry_run: bool = False):
             print("  Fetching Stripe data...", end=" ", flush=True)
             goal = config["stripe"].get("monthly_revenue_goal", 0)
             currency = config["stripe"].get("currency", "usd")
-            stripe_data = fetch_stripe_metrics(api_key, float(goal), currency)
-            print("OK")
+            try:
+                stripe_data = fetch_stripe_metrics(api_key, float(goal), currency)
+                print("OK")
+            except Exception as e:
+                print("FAILED")
+                print(f"    Error: {e}")
+                print("    Tip: Check your Stripe API key. Run 'northstar doctor' for diagnostics.")
 
     # Fetch Lemon Squeezy (Standard/Pro only)
     if config.get("lemonsqueezy", {}).get("enabled"):
@@ -1360,8 +1365,13 @@ def cmd_run(config: dict, dry_run: bool = False):
             else:
                 print("  Fetching Lemon Squeezy data...", end=" ", flush=True)
                 ls_goal = config["lemonsqueezy"].get("monthly_revenue_goal", 0)
-                lemonsqueezy_data = fetch_lemon_squeezy_metrics(ls_key, float(ls_goal))
-                print("OK")
+                try:
+                    lemonsqueezy_data = fetch_lemon_squeezy_metrics(ls_key, float(ls_goal))
+                    print("OK")
+                except Exception as e:
+                    print("FAILED")
+                    print(f"    Error: {e}")
+                    print("    Tip: Check your Lemon Squeezy API key. Run 'northstar doctor' for diagnostics.")
 
     # Fetch Gumroad (Standard/Pro only)
     if config.get("gumroad", {}).get("enabled"):
@@ -1374,8 +1384,13 @@ def cmd_run(config: dict, dry_run: bool = False):
             else:
                 print("  Fetching Gumroad data...", end=" ", flush=True)
                 gr_goal = config["gumroad"].get("monthly_revenue_goal", 0)
-                gumroad_data = fetch_gumroad_metrics(gr_token, float(gr_goal))
-                print("OK")
+                try:
+                    gumroad_data = fetch_gumroad_metrics(gr_token, float(gr_goal))
+                    print("OK")
+                except Exception as e:
+                    print("FAILED")
+                    print(f"    Error: {e}")
+                    print("    Tip: Check your Gumroad access token. Run 'northstar doctor' for diagnostics.")
 
     # Fetch Shopify (Standard/Pro only)
     if config.get("shopify", {}).get("enabled"):
@@ -1388,8 +1403,13 @@ def cmd_run(config: dict, dry_run: bool = False):
                 print("  Shopify: SKIP (not configured)")
             else:
                 print("  Fetching Shopify data...", end=" ", flush=True)
-                shopify_data = fetch_shopify_metrics(domain, token)
-                print("OK")
+                try:
+                    shopify_data = fetch_shopify_metrics(domain, token)
+                    print("OK")
+                except Exception as e:
+                    print("FAILED")
+                    print(f"    Error: {e}")
+                    print("    Tip: Check your Shopify credentials. Run 'northstar doctor' for diagnostics.")
 
     if not stripe_data and not lemonsqueezy_data and not shopify_data and not gumroad_data:
         print("\n  No data sources configured.")
